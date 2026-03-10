@@ -9,6 +9,7 @@ function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedSheet, setSelectedSheet] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const sheets = [
     { name: 'Monster', file: 'monster.md' },
@@ -150,11 +151,25 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ '--zoom-level': zoomLevel }}>
       <header className="app-header">
         <h1 className="clickable-title" onClick={goBackToSelection}>🚀 DSA Revision Hub</h1>
         <div className="sheet-indicator">
           Currently studying: <strong>{selectedSheet.name}</strong>
+        </div>
+        <div className="zoom-control">
+          <span className="zoom-label">🔍 Zoom:</span>
+          <input
+            type="range"
+            min="0.75"
+            max="1.5"
+            step="0.05"
+            value={zoomLevel}
+            onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
+            className="zoom-slider"
+            title={`Current zoom: ${Math.round(zoomLevel * 100)}%`}
+          />
+          <span className="zoom-percent">{Math.round(zoomLevel * 100)}%</span>
         </div>
         <div className="progress-bar">
           <div

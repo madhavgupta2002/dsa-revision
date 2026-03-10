@@ -31,7 +31,7 @@ body {
 }
 
 .app-header h1 {
-  font-size: 1.8rem;
+  font-size: calc(1.8rem * var(--zoom-level, 1));
   margin-bottom: 8px;
   background: linear-gradient(135deg, #60a5fa, #a78bfa);
   -webkit-background-clip: text;
@@ -48,6 +48,58 @@ body {
 .clickable-title:hover {
   transform: scale(1.05);
   filter: brightness(1.2);
+}
+
+/* Zoom Control */
+.zoom-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0;
+  padding: 8px;
+}
+
+.zoom-label {
+  font-size: calc(0.9rem * var(--zoom-level, 1));
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.zoom-slider {
+  width: 150px;
+  height: 6px;
+  cursor: pointer;
+  accent-color: #60a5fa;
+  border-radius: 5px;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #60a5fa;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+  border: 2px solid rgba(96, 165, 250, 0.8);
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #60a5fa;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+  border: 2px solid rgba(96, 165, 250, 0.8);
+}
+
+.zoom-percent {
+  font-size: calc(0.9rem * var(--zoom-level, 1));
+  color: #60a5fa;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: right;
 }
 
 .progress-bar {
@@ -69,7 +121,7 @@ body {
 }
 
 .question-counter {
-  font-size: 1.1rem;
+  font-size: calc(1.1rem * var(--zoom-level, 1));
   color: #94a3b8;
 }
 
@@ -120,7 +172,7 @@ body {
 /* Markdown Styles */
 .question-card h3 {
   color: #60a5fa;
-  font-size: 2rem;
+  font-size: calc(2rem * var(--zoom-level, 1));
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 2px solid rgba(96, 165, 250, 0.3);
@@ -139,6 +191,7 @@ body {
   line-height: 1.2;
   color: #cbd5e1;
   font-weight: 600;
+  font-size: calc(1rem * var(--zoom-level, 1));
 }
 
 .question-card li::before {
@@ -147,7 +200,7 @@ body {
   left: 0;
   color: #60a5fa;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: calc(1.2em * var(--zoom-level, 1));
 }
 
 .question-card strong {
@@ -160,7 +213,7 @@ body {
   padding: 3px 8px;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
-  font-size: 0.9em;
+  font-size: calc(0.9em * var(--zoom-level, 1));
   color: #fbbf24;
   border: 1px solid rgba(251, 191, 36, 0.2);
   font-weight: 600;
@@ -178,7 +231,7 @@ body {
   background: none;
   padding: 0;
   color: inherit;
-  font-size: 0.95em;
+  font-size: calc(0.95em * var(--zoom-level, 1));
   border: none;
 }
 
@@ -187,6 +240,7 @@ body {
   line-height: 1.2;
   color: #cbd5e1;
   font-weight: 600;
+  font-size: calc(1rem * var(--zoom-level, 1));
 }
 
 /* Navigation Footer */
@@ -207,7 +261,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 15px 35px;
-  font-size: 1.1rem;
+  font-size: calc(1.1rem * var(--zoom-level, 1));
   font-weight: 600;
   border: 2px solid rgba(96, 165, 250, 0.3);
   border-radius: 12px;
@@ -237,7 +291,7 @@ body {
 }
 
 .arrow {
-  font-size: 1.3rem;
+  font-size: calc(1.3rem * var(--zoom-level, 1));
   transition: transform 0.3s ease;
 }
 
@@ -287,7 +341,7 @@ body {
 .keyboard-hint {
   text-align: center;
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--zoom-level, 1));
   padding: 10px;
   animation: fadeIn 1s ease-out 0.5s both;
 }
@@ -382,7 +436,7 @@ body {
   background: rgba(96, 165, 250, 0.8);
   border: 2px solid rgba(96, 165, 250, 0.9);
   color: white;
-  font-size: 1.5rem;
+  font-size: calc(1.5rem * var(--zoom-level, 1));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -422,7 +476,7 @@ body {
 }
 
 .selection-card h2 {
-  font-size: 2.5rem;
+  font-size: calc(2.5rem * var(--zoom-level, 1));
   color: #60a5fa;
   margin-bottom: 15px;
   background: linear-gradient(135deg, #60a5fa, #a78bfa);
@@ -432,7 +486,7 @@ body {
 }
 
 .selection-card p {
-  font-size: 1.2rem;
+  font-size: calc(1.2rem * var(--zoom-level, 1));
   color: #cbd5e1;
   margin-bottom: 40px;
 }
@@ -455,7 +509,7 @@ body {
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 1.1rem;
+  font-size: calc(1.1rem * var(--zoom-level, 1));
   font-weight: 600;
   color: #e2e8f0;
   min-width: 200px;
@@ -473,11 +527,11 @@ body {
 }
 
 .sheet-icon {
-  font-size: 3rem;
+  font-size: calc(3rem * var(--zoom-level, 1));
 }
 
 .sheet-name {
-  font-size: 1.3rem;
+  font-size: calc(1.3rem * var(--zoom-level, 1));
   color: #60a5fa;
 }
 
@@ -502,7 +556,7 @@ body {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--zoom-level, 1));
 }
 
 .back-button:hover {
@@ -517,7 +571,7 @@ body {
 
 /* Sheet Indicator */
 .sheet-indicator {
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--zoom-level, 1));
   color: #94a3b8;
   margin-bottom: 8px;
   font-weight: 500;
@@ -544,7 +598,7 @@ body {
   }
 
   .selection-card h2 {
-    font-size: 2rem;
+    font-size: calc(2rem * var(--zoom-level, 1));
   }
 
   .sheet-buttons {
@@ -558,7 +612,7 @@ body {
   }
 
   .app-header h1 {
-    font-size: 1.8rem;
+    font-size: calc(1.8rem * var(--zoom-level, 1));
   }
 
   .content-container {
@@ -570,7 +624,7 @@ body {
   }
 
   .question-card h3 {
-    font-size: 1.5rem;
+    font-size: calc(1.5rem * var(--zoom-level, 1));
   }
 
   .navigation-footer {
@@ -619,11 +673,11 @@ body {
   }
 
   .selection-card h2 {
-    font-size: 1.5rem;
+    font-size: calc(1.5rem * var(--zoom-level, 1));
   }
 
   .selection-card p {
-    font-size: 1rem;
+    font-size: calc(1rem * var(--zoom-level, 1));
   }
 
   .sheet-button {
@@ -631,18 +685,18 @@ body {
   }
 
   .sheet-icon {
-    font-size: 2.5rem;
+    font-size: calc(2.5rem * var(--zoom-level, 1));
   }
 
   .sheet-name {
-    font-size: 1.1rem;
+    font-size: calc(1.1rem * var(--zoom-level, 1));
   }
 
   .question-card h3 {
-    font-size: 1.3rem;
+    font-size: calc(1.3rem * var(--zoom-level, 1));
   }
 
   .question-card li {
-    font-size: 0.95rem;
+    font-size: calc(0.95rem * var(--zoom-level, 1));
   }
 }
