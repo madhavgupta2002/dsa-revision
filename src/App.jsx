@@ -16,6 +16,7 @@ function App() {
     { name: 'Monster', file: 'monster.md' },
     { name: 'Fraz', file: 'fraz.md' },
     { name: 'Striver 79', file: 'striver79.md' },
+    { name: 'Amazon 300', file: 'amazon300.md' },
   ];
 
   // Get URL parameters
@@ -29,7 +30,7 @@ function App() {
 
   // Update URL based on sheet and question
   const updateUrl = (sheetName, questionIndex) => {
-    const url = sheetName 
+    const url = sheetName
       ? `?sheet=${sheetName}&question=${questionIndex}`
       : '/';
     window.history.pushState({}, '', url);
@@ -86,7 +87,7 @@ function App() {
   // Handle initial load from URL and back button navigation
   useEffect(() => {
     const params = getUrlParams();
-    
+
     if (params.sheet) {
       // Find and load the sheet based on URL parameter
       const sheet = sheets.find(s => s.name.toLowerCase() === params.sheet);
@@ -117,7 +118,7 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const params = getUrlParams();
-      
+
       if (params.sheet) {
         const sheet = sheets.find(s => s.name.toLowerCase() === params.sheet);
         if (sheet && selectedSheet?.file === sheet.file) {
@@ -171,7 +172,7 @@ function App() {
 
     const handleSwipe = () => {
       if (!swipeEnabled) return;
-      
+
       const swipeThreshold = 50; // Minimum distance to trigger swipe
       const difference = touchStartX - touchEndX;
 
