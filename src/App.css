@@ -39,6 +39,17 @@ body {
   background-clip: text;
 }
 
+.clickable-title {
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  padding: 5px;
+}
+
+.clickable-title:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
 .progress-bar {
   width: 100%;
   max-width: 800px;
@@ -346,8 +357,206 @@ body {
   background: rgba(96, 165, 250, 0.5);
 }
 
+/* Mobile Navigation Icons */
+.mobile-nav-left,
+.mobile-nav-right {
+  display: none;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+.mobile-nav-left {
+  left: 10px;
+}
+
+.mobile-nav-right {
+  right: 10px;
+}
+
+.mobile-nav-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.8);
+  border: 2px solid rgba(96, 165, 250, 0.9);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+}
+
+.mobile-nav-button:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 1);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(96, 165, 250, 0.6);
+}
+
+.mobile-nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Sheet Selection Screen */
+.selection-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 100px);
+}
+
+.selection-card {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 20px;
+  padding: 50px 40px;
+  text-align: center;
+  animation: slideUp 0.5s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.selection-card h2 {
+  font-size: 2.5rem;
+  color: #60a5fa;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.selection-card p {
+  font-size: 1.2rem;
+  color: #cbd5e1;
+  margin-bottom: 40px;
+}
+
+.sheet-buttons {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sheet-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 40px 50px;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), rgba(167, 139, 250, 0.1));
+  border: 2px solid rgba(96, 165, 250, 0.4);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  min-width: 200px;
+}
+
+.sheet-button:hover {
+  transform: translateY(-5px);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
+  border-color: #60a5fa;
+  box-shadow: 0 15px 40px rgba(96, 165, 250, 0.3);
+}
+
+.sheet-button:active {
+  transform: translateY(-2px);
+}
+
+.sheet-icon {
+  font-size: 3rem;
+}
+
+.sheet-name {
+  font-size: 1.3rem;
+  color: #60a5fa;
+}
+
+/* Back Button and Header Top */
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.header-spacer {
+  width: 80px;
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: rgba(96, 165, 250, 0.1);
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  border-radius: 8px;
+  color: #60a5fa;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.back-button:hover {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: #60a5fa;
+  transform: translateX(-3px);
+}
+
+.back-button:active {
+  transform: translateX(-1px);
+}
+
+/* Sheet Indicator */
+.sheet-indicator {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.sheet-indicator strong {
+  color: #a78bfa;
+  font-weight: 700;
+}
+
+/* Error Container with Back Button */
+.error-container {
+  position: relative;
+}
+
+.error-container .back-button {
+  margin-top: 20px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  .selection-card {
+    padding: 30px 20px;
+  }
+
+  .selection-card h2 {
+    font-size: 2rem;
+  }
+
+  .sheet-buttons {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sheet-button {
+    padding: 30px 40px;
+    min-width: 100%;
+  }
+
   .app-header h1 {
     font-size: 1.8rem;
   }
@@ -384,13 +593,51 @@ body {
     display: none;
   }
 
+  .mobile-nav-left,
+  .mobile-nav-right {
+    display: flex;
+  }
+
   .nav-button {
     padding: 15px;
     min-width: 60px;
   }
+
+  .header-top {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .header-spacer {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
+  .selection-card {
+    padding: 20px 15px;
+  }
+
+  .selection-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .selection-card p {
+    font-size: 1rem;
+  }
+
+  .sheet-button {
+    padding: 25px 30px;
+  }
+
+  .sheet-icon {
+    font-size: 2.5rem;
+  }
+
+  .sheet-name {
+    font-size: 1.1rem;
+  }
+
   .question-card h3 {
     font-size: 1.3rem;
   }

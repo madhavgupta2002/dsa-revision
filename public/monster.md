@@ -6871,951 +6871,2525 @@ public:
 
 ## 🧩 Dynamic Programming — **47 Questions**
 
-*(Grouping similar basic DP together aggressively to save tokens)*
-
 ### 1-D DP
 
 ### Q270) Climbing Stairs
-- **Problem:** Ways to climb `n` stairs (1 or 2 at a time).
-- **Algo:** Fibonnaci. `dp[i] = dp[i-1] + dp[i-2]`.
+- **Problem:** Find the number of distinct ways to climb `n` stairs if you can take 1 or 2 steps at a time.
+- **Concept / Optimal Algo:** The problem breaks down into the Fibonacci sequence. The number of ways to reach step `i` is the sum of ways to reach `i-1` and `i-2`.
 - **C++ Code:**
-```cpp
-class Solution { public: int climbStairs(int n) { int a=1,b=1; while(n--) { b+=a; a=b-a; } return a; } };
-```
-- **Complexity:** T: O(N) | S: O(1)
 
-### Q271) Min Cost Climbing Stairs
-- **Problem:** Min cost to reach top.
-- **Algo:** `dp[i] = cost[i] + min(dp[i-1], dp[i-2])`.
-- **C++ Code:**
-```cpp
-class Solution { public: int minCostClimbingStairs(vector<int>& cost) { 
-    int a=cost[0], b=cost[1]; for(int i=2; i<cost.size(); i++) { int c=cost[i]+min(a,b); a=b; b=c; } return min(a,b);
-}};
-```
-- **Complexity:** T: O(N) | S: O(1)
-
-### Q272) House Robber
-- **Problem:** Max money no adjacent houses.
-- **Algo:** `dp[i] = max(dp[i-1], dp[i-2] + money[i])`.
-- **C++ Code:**
-```cpp
-class Solution { public: int rob(vector<int>& nums) { 
-    int a=0, b=0; for(int x: nums) { int c=max(a+x, b); a=b; b=c; } return b; 
-}};
-```
-
-### Q273) House Robber II
-- **Problem:** Houses are in a circle.
-- **Algo:** `max(rob(0 to N-2), rob(1 to N-1))`.
-- **C++ Code:**
+**Memoization (Top-Down):**
 ```cpp
 class Solution {
-    int rob1(vector<int>& nums, int l, int r) { int a=0,b=0; for(int i=l;i<=r;i++){int c=max(a+nums[i],b); a=b; b=c;} return b; }
-public: int rob(vector<int>& nums) { return nums.size()==1 ? nums[0] : max(rob1(nums,0,nums.size()-2), rob1(nums,1,nums.size()-1)); }
+    int solve(int i, vector<int>& memo) {
+        if (i <= 2) return i;
+        if (memo[i] != -1) return memo[i];
+        return memo[i] = solve(i - 1, memo) + solve(i - 2, memo);
+    }
+public:
+    int climbStairs(int n) {
+        if (n <= 2) return n;
+        vector<int> memo(n + 1, -1);
+        return solve(n, memo);
+    }
 };
 ```
 
-### Q274) Partition Equal Subset Sum (Knapsack)
-- **Problem:** Partition array into two equal subsets.
-- **Concept:** 0/1 Knapsack. Target = Sum / 2.
-- **C++ Code:**
+**Tabulation (Bottom-Up / Space Optimized):**
 ```cpp
-class Solution { public: bool canPartition(vector<int>& nums) {
-    int sum = accumulate(nums.begin(), nums.end(), 0); if(sum % 2 != 0) return false;
-    int target = sum / 2; vector<bool> dp(target + 1, false); dp[0] = true;
-    for(int x: nums) for(int j = target; j >= x; j--) dp[j] = dp[j] || dp[j - x];
-    return dp[target];
-}};
+class Solution {
+public:
+    int climbStairs(int n) {
+        if (n <= 2) return n;
+        int prev2 = 1;
+        int prev1 = 2;
+        
+        for (int i = 3; i <= n; i++) {
+            int curr = prev1 + prev2;
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+};
 ```
+- **Complexity:** T: O(N) | S: O(N) for Memoization, O(1) for Tabulation.
+
+---
+
+### Q271) Min Cost Climbing Stairs
+- **Problem:** Find the minimum cost to reach the top of the floor. You can start from index 0 or 1.
+- **Concept / Optimal Algo:** At each step `i`, the minimum cost to reach it is the cost of the current step plus the minimum of the cost to reach `i-1` or `i-2`.
+- **C++ Code:**
+
+**Memoization (Top-Down):**
+```cpp
+class Solution {
+    int solve(vector<int>& cost, int i, vector<int>& memo) {
+        if (i < 0) return 0;
+        if (i == 0 || i == 1) return cost[i];
+        if (memo[i] != -1) return memo[i];
+        
+        return memo[i] = cost[i] + min(solve(cost, i - 1, memo), solve(cost, i - 2, memo));
+    }
+public:
+    int minCostClimbingStairs(vector<int>& cost) {
+        int n = cost.size();
+        vector<int> memo(n, -1);
+        return min(solve(cost, n - 1, memo), solve(cost, n - 2, memo));
+    }
+};
+```
+
+**Tabulation (Bottom-Up / Space Optimized):**
+```cpp
+class Solution {
+public:
+    int minCostClimbingStairs(vector<int>& cost) {
+        int prev2 = cost[0];
+        int prev1 = cost[1];
+        
+        for (int i = 2; i < cost.size(); i++) {
+            int curr = cost[i] + min(prev1, prev2);
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return min(prev1, prev2);
+    }
+};
+```
+- **Complexity:** T: O(N) | S: O(N) for Memoization, O(1) for Tabulation.
+
+---
+
+### Q272) House Robber
+- **Problem:** Maximize the amount of money you can rob without robbing adjacent houses.
+- **Concept / Optimal Algo:** Decide whether to rob the current house `i` (add to `i-2`) or skip it (take max from `i-1`).
+- **C++ Code:**
+
+**Memoization (Top-Down):**
+```cpp
+class Solution {
+    int solve(vector<int>& nums, int i, vector<int>& memo) {
+        if (i < 0) return 0;
+        if (memo[i] != -1) return memo[i];
+        
+        int rob = nums[i] + solve(nums, i - 2, memo);
+        int skip = solve(nums, i - 1, memo);
+        
+        return memo[i] = max(rob, skip);
+    }
+public:
+    int rob(vector<int>& nums) {
+        vector<int> memo(nums.size(), -1);
+        return solve(nums, nums.size() - 1, memo);
+    }
+};
+```
+
+**Tabulation (Bottom-Up / Space Optimized):**
+```cpp
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        int prev2 = 0; // i-2
+        int prev1 = 0; // i-1
+        
+        for (int x : nums) {
+            int curr = max(prev1, prev2 + x);
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+};
+```
+- **Complexity:** T: O(N) | S: O(1) for Tabulation.
+
+---
+
+### Q273) House Robber II
+- **Problem:** Maximize the amount of money robbed where houses are arranged in a circle (first and last are adjacent).
+- **Concept / Optimal Algo:** Since the first and last are adjacent, you can either rob from `0` to `N-2` or from `1` to `N-1`. Take the maximum of these two scenarios using the standard House Robber logic.
+- **C++ Code:**
+
+**Tabulation (Space Optimized for both ranges):**
+```cpp
+class Solution {
+    int robRange(vector<int>& nums, int start, int end) {
+        int prev2 = 0, prev1 = 0;
+        for (int i = start; i <= end; i++) {
+            int curr = max(prev1, prev2 + nums[i]);
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+public:
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        if (n == 1) return nums[0];
+        
+        return max(robRange(nums, 0, n - 2), robRange(nums, 1, n - 1));
+    }
+};
+```
+- **Complexity:** T: O(N) | S: O(1)
+
+---
+
+### Q274) Partition Equal Subset Sum (Knapsack)
+- **Problem:** Determine if the array can be partitioned into two subsets such that the sum of elements in both subsets is equal.
+- **Concept / Optimal Algo:** This is a 0/1 Knapsack problem. Find if there exists a subset that sums up to `Total Sum / 2`. If the total sum is odd, it's impossible.
+- **C++ Code:**
+
+**Memoization (Top-Down):**
+```cpp
+class Solution {
+    bool solve(vector<int>& nums, int i, int target, vector<vector<int>>& memo) {
+        if (target == 0) return true;
+        if (i == 0) return nums[0] == target;
+        if (memo[i][target] != -1) return memo[i][target];
+        
+        bool notTake = solve(nums, i - 1, target, memo);
+        bool take = false;
+        if (target >= nums[i]) {
+            take = solve(nums, i - 1, target - nums[i], memo);
+        }
+        
+        return memo[i][target] = take || notTake;
+    }
+public:
+    bool canPartition(vector<int>& nums) {
+        int sum = 0;
+        for (int num : nums) sum += num;
+        
+        if (sum % 2 != 0) return false;
+        
+        int target = sum / 2;
+        vector<vector<int>> memo(nums.size(), vector<int>(target + 1, -1));
+        return solve(nums, nums.size() - 1, target, memo);
+    }
+};
+```
+
+**Tabulation (Bottom-Up / Space Optimized):**
+```cpp
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum % 2 != 0) return false;
+        
+        int target = sum / 2;
+        vector<bool> dp(target + 1, false);
+        dp[0] = true;
+        
+        for (int x : nums) {
+            for (int j = target; j >= x; j--) {
+                dp[j] = dp[j] || dp[j - x];
+            }
+        }
+        return dp[target];
+    }
+};
+```
+- **Complexity:** T: O(N * Target) | S: O(Target) for Tabulation.
+
+---
 
 ### Q275) Target Sum
-- **Problem:** Assign +/- to sum to target.
-- **Concept:** DP / Subset Sum.
+- **Problem:** Assign `+` or `-` to elements to sum to a target. Return the number of ways.
+- **Concept / Optimal Algo:** Math + DP. Let `S1` be positive elements, `S2` be negative. `S1 - S2 = target`, `S1 + S2 = totalSum`. So, `S1 = (target + totalSum) / 2`. The problem reduces to finding subset sums equal to `S1`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
-class Solution { public: int findTargetSumWays(vector<int>& nums, int target) {
-    int sum = accumulate(nums.begin(), nums.end(), 0); if(sum < abs(target) || (sum + target) % 2 != 0) return 0;
-    int s = (sum + target) / 2; vector<int> dp(s + 1, 0); dp[0] = 1;
-    for(int x: nums) for(int j = s; j >= x; j--) dp[j] += dp[j - x];
-    return dp[s];
-}};
+class Solution {
+    int solve(vector<int>& nums, int i, int target, vector<vector<int>>& memo) {
+        if (i < 0) return target == 0 ? 1 : 0;
+        if (memo[i][target] != -1) return memo[i][target];
+        
+        int notTake = solve(nums, i - 1, target, memo);
+        int take = 0;
+        if (target >= nums[i]) {
+            take = solve(nums, i - 1, target - nums[i], memo);
+        }
+        
+        return memo[i][target] = take + notTake;
+    }
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum < abs(target) || (sum + target) % 2 != 0) return 0;
+        
+        int s = (sum + target) / 2;
+        vector<vector<int>> memo(nums.size(), vector<int>(s + 1, -1));
+        return solve(nums, nums.size() - 1, s, memo);
+    }
+};
 ```
+
+**Tabulation (Bottom-Up / Space Optimized):**
+```cpp
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum < abs(target) || (sum + target) % 2 != 0) return 0;
+        
+        int s = (sum + target) / 2;
+        vector<int> dp(s + 1, 0);
+        dp[0] = 1;
+        
+        for (int x : nums) {
+            for (int j = s; j >= x; j--) {
+                dp[j] += dp[j - x];
+            }
+        }
+        return dp[s];
+    }
+};
+```
+- **Complexity:** T: O(N * S) | S: O(S)
+
+---
 
 ### Q276) Last Stone Weight II
-- **Problem:** Smash stones, return min remaining weight.
-- **Concept:** Partition into two closest subsets.
+- **Problem:** Smash stones together, return the minimum remaining weight.
+- **Concept / Optimal Algo:** Partition the stones into two subsets whose sum is as close as possible. Target = `sum / 2`. Find the max possible subset sum `maxS <= target`. Answer is `sum - 2 * maxS`.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up 1D Array):**
 ```cpp
-class Solution { public: int lastStoneWeightII(vector<int>& stones) {
-    int sum = accumulate(stones.begin(), stones.end(), 0), target = sum / 2;
-    vector<bool> dp(target + 1, false); dp[0] = true; int maxS = 0;
-    for(int x: stones) for(int j = target; j >= x; j--) { if(dp[j - x]) { dp[j] = true; maxS = max(maxS, j); } }
-    return sum - 2 * maxS;
-}};
+class Solution {
+public:
+    int lastStoneWeightII(vector<int>& stones) {
+        int sum = accumulate(stones.begin(), stones.end(), 0);
+        int target = sum / 2;
+        
+        vector<bool> dp(target + 1, false);
+        dp[0] = true;
+        int maxS = 0;
+        
+        for (int x : stones) {
+            for (int j = target; j >= x; j--) {
+                if (dp[j - x]) {
+                    dp[j] = true;
+                    maxS = max(maxS, j);
+                }
+            }
+        }
+        return sum - 2 * maxS;
+    }
+};
 ```
+- **Complexity:** T: O(N * Target) | S: O(Target)
+
+---
 
 ### Q277) Coin Change
-- **Problem:** Min coins for amount.
-- **Concept:** Unbounded Knapsack.
+- **Problem:** Find the minimum number of coins needed to make a given amount.
+- **Concept / Optimal Algo:** Unbounded Knapsack. `dp[i] = min(dp[i], dp[i - coin] + 1)`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
-class Solution { public: int coinChange(vector<int>& coins, int amount) {
-    vector<int> dp(amount + 1, amount + 1); dp[0] = 0;
-    for(int c: coins) for(int j = c; j <= amount; j++) dp[j] = min(dp[j], dp[j - c] + 1);
-    return dp[amount] > amount ? -1 : dp[amount];
-}};
+class Solution {
+    int solve(vector<int>& coins, int amount, vector<int>& memo) {
+        if (amount == 0) return 0;
+        if (amount < 0) return 1e9;
+        if (memo[amount] != -1) return memo[amount];
+        
+        int minCoins = 1e9;
+        for (int coin : coins) {
+            int res = solve(coins, amount - coin, memo);
+            if (res != 1e9) minCoins = min(minCoins, res + 1);
+        }
+        return memo[amount] = minCoins;
+    }
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> memo(amount + 1, -1);
+        int ans = solve(coins, amount, memo);
+        return ans >= 1e9 ? -1 : ans;
+    }
+};
 ```
+
+**Tabulation (Bottom-Up):**
+```cpp
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, amount + 1);
+        dp[0] = 0;
+        
+        for (int c : coins) {
+            for (int j = c; j <= amount; j++) {
+                dp[j] = min(dp[j], dp[j - c] + 1);
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+};
+```
+- **Complexity:** T: O(N * Amount) | S: O(Amount)
+
+---
 
 ### Q278) Coin Change II
-- **Problem:** Number of ways to make amount.
+- **Problem:** Find the number of combinations that make up an amount.
+- **Concept / Optimal Algo:** Unbounded Knapsack. `dp[i] += dp[i - coin]`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
-class Solution { public: int change(int amount, vector<int>& coins) {
-    vector<int> dp(amount + 1, 0); dp[0] = 1;
-    for(int c: coins) for(int j = c; j <= amount; j++) dp[j] += dp[j - c];
-    return dp[amount];
-}};
+class Solution {
+    int solve(int i, int amount, vector<int>& coins, vector<vector<int>>& memo) {
+        if (amount == 0) return 1;
+        if (i < 0 || amount < 0) return 0;
+        if (memo[i][amount] != -1) return memo[i][amount];
+        
+        int notTake = solve(i - 1, amount, coins, memo);
+        int take = 0;
+        if (coins[i] <= amount) {
+            take = solve(i, amount - coins[i], coins, memo);
+        }
+        
+        return memo[i][amount] = take + notTake;
+    }
+public:
+    int change(int amount, vector<int>& coins) {
+        vector<vector<int>> memo(coins.size(), vector<int>(amount + 1, -1));
+        return solve(coins.size() - 1, amount, coins, memo);
+    }
+};
 ```
 
-### Q279) Perfect Squares
-- **Problem:** Min perfect squares summing to N.
-- **C++ Code:**
+**Tabulation (Bottom-Up 1D Array):**
 ```cpp
-class Solution { public: int numSquares(int n) {
-    vector<int> dp(n + 1, n + 1); dp[0] = 0;
-    for(int i = 1; i * i <= n; i++) for(int j = i * i; j <= n; j++) dp[j] = min(dp[j], dp[j - i * i] + 1);
-    return dp[n];
-}};
+class Solution {
+public:
+    int change(int amount, vector<int>& coins) {
+        vector<int> dp(amount + 1, 0);
+        dp[0] = 1;
+        
+        for (int c : coins) {
+            for (int j = c; j <= amount; j++) {
+                dp[j] += dp[j - c];
+            }
+        }
+        return dp[amount];
+    }
+};
 ```
+- **Complexity:** T: O(N * Amount) | S: O(Amount)
+
+---
+
+### Q279) Perfect Squares
+- **Problem:** Return the minimum number of perfect square numbers that sum to `N`.
+- **Concept / Optimal Algo:** Unbounded knapsack variation where "coins" are perfect squares `<= N`.
+- **C++ Code:**
+
+**Tabulation (Bottom-Up):**
+```cpp
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n + 1, n + 1);
+        dp[0] = 0;
+        
+        for (int i = 1; i * i <= n; i++) {
+            int sq = i * i;
+            for (int j = sq; j <= n; j++) {
+                dp[j] = min(dp[j], dp[j - sq] + 1);
+            }
+        }
+        return dp[n];
+    }
+};
+```
+- **Complexity:** T: O(N * sqrt(N)) | S: O(N)
+
+---
 
 ### LIS (Longest Increasing Subsequence)
 
 ### Q280) Longest Increasing Subsequence
-- **Concept:** DP or Binary Search. `lower_bound` overwrites.
+- **Problem:** Find the length of the longest strictly increasing subsequence.
+- **Concept / Optimal Algo:** 
+    - DP approach: `dp[i] = 1 + max(dp[j])` for `j < i` and `nums[j] < nums[i]`.
+    - Binary Search approach (Optimal): Maintain an array `res`. If `x > res.back()`, append it. Otherwise, use `lower_bound` to replace the first element `>= x`.
 - **C++ Code:**
+
+**DP Tabulation:**
 ```cpp
-class Solution { public: int lengthOfLIS(vector<int>& nums) {
-    vector<int> res; for(int x: nums) {
-        auto it = lower_bound(res.begin(), res.end(), x);
-        if(it == res.end()) res.push_back(x); else *it = x;
-    } return res.size();
-}};
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> dp(n, 1);
+        int max_len = 1;
+        
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < i; j++){
+                if(nums[i] > nums[j]){
+                    dp[i] = max(dp[i], dp[j] + 1);
+                }
+            }
+            max_len = max(max_len, dp[i]);
+        }
+        return max_len;
+    }
+};
 ```
+
+**Binary Search (Optimal):**
+```cpp
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        vector<int> res;
+        for (int x : nums) {
+            auto it = lower_bound(res.begin(), res.end(), x);
+            if (it == res.end()) {
+                res.push_back(x);
+            } else {
+                *it = x;
+            }
+        }
+        return res.size();
+    }
+};
+```
+- **Complexity:** T: O(N log N) (Optimal) | S: O(N)
+
+---
 
 ### Q281) Number of Longest Increasing Subsequence
-- **Concept:** Two arrays: lengths and counts.
+- **Problem:** Return the number of longest increasing subsequences.
+- **Concept / Optimal Algo:** Two DP arrays. `len[i]` stores LIS ending at `i`. `count[i]` stores the number of ways to form LIS ending at `i`.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up):**
 ```cpp
-class Solution { public: int findNumberOfLIS(vector<int>& nums) {
-    int n = nums.size(), maxL = 1, res = 0; vector<int> len(n, 1), count(n, 1);
-    for(int i=1; i<n; i++) for(int j=0; j<i; j++) if(nums[i] > nums[j]) {
-        if(len[j]+1 > len[i]) { len[i] = len[j]+1; count[i] = count[j]; }
-        else if(len[j]+1 == len[i]) count[i] += count[j];
+class Solution {
+public:
+    int findNumberOfLIS(vector<int>& nums) {
+        int n = nums.size();
+        if (n == 0) return 0;
+        
+        vector<int> len(n, 1);
+        vector<int> count(n, 1);
+        int maxL = 1;
+        int res = 0;
+        
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[i] > nums[j]) {
+                    if (len[j] + 1 > len[i]) {
+                        len[i] = len[j] + 1;
+                        count[i] = count[j]; // Reset count
+                    } else if (len[j] + 1 == len[i]) {
+                        count[i] += count[j]; // Accumulate count
+                    }
+                }
+            }
+            maxL = max(maxL, len[i]);
+        }
+        
+        for (int i = 0; i < n; i++) {
+            if (len[i] == maxL) {
+                res += count[i];
+            }
+        }
+        return res;
     }
-    for(int x: len) maxL = max(maxL, x);
-    for(int i=0; i<n; i++) if(len[i] == maxL) res += count[i]; return res;
-}};
+};
 ```
+- **Complexity:** T: O(N^2) | S: O(N)
+
+---
 
 ### Q282) Russian Doll Envelopes
-- **Concept:** 2D LIS. Sort width ASC, height DESC. Run 1D LIS on heights.
+- **Problem:** Maximum number of envelopes you can Russian doll (fit inside one another).
+- **Concept / Optimal Algo:** 2D LIS. Sort by width ASC, height DESC. Running 1D LIS on heights ensures we don't pick two envelopes with the same width (since height is DESC, the second one will be smaller/equal and skipped by LIS).
 - **C++ Code:**
+
+**Optimal (Sorting + Binary Search LIS):**
 ```cpp
-class Solution { public: int maxEnvelopes(vector<vector<int>>& e) {
-    sort(e.begin(), e.end(), [](auto& a, auto& b){ return a[0]==b[0] ? a[1]>b[1] : a[0]<b[0]; });
-    vector<int> dp; for(auto& env : e) {
-        auto it = lower_bound(dp.begin(), dp.end(), env[1]);
-        if(it == dp.end()) dp.push_back(env[1]); else *it = env[1];
-    } return dp.size();
-}};
+class Solution {
+public:
+    int maxEnvelopes(vector<vector<int>>& e) {
+        sort(e.begin(), e.end(), [](const vector<int>& a, const vector<int>& b) {
+            if (a[0] == b[0]) return a[1] > b[1];
+            return a[0] < b[0];
+        });
+        
+        vector<int> dp;
+        for (auto& env : e) {
+            auto it = lower_bound(dp.begin(), dp.end(), env[1]);
+            if (it == dp.end()) {
+                dp.push_back(env[1]);
+            } else {
+                *it = env[1];
+            }
+        }
+        return dp.size();
+    }
+};
 ```
+- **Complexity:** T: O(N log N) | S: O(N)
+
+---
 
 ### 2-D Grid DP
 
 ### Q283) Unique Paths II
-- **Problem:** Paths avoiding obstacles.
+- **Problem:** Find unique paths from top-left to bottom-right avoiding obstacles (represented by 1).
+- **Concept / Optimal Algo:** `dp[i][j]` = `dp[i-1][j] + dp[i][j-1]`. If obstacle, `dp[i][j] = 0`. Space optimized to 1D array.
 - **C++ Code:**
-```cpp
-class Solution { public: int uniquePathsWithObstacles(vector<vector<int>>& og) {
-    int m = og.size(), n = og[0].size(); vector<int> dp(n, 0); dp[0] = 1;
-    for(int i=0; i<m; i++) for(int j=0; j<n; j++) {
-        if(og[i][j]) dp[j] = 0; else if(j > 0) dp[j] += dp[j-1];
-    } return dp[n-1];
-}};
-```
 
-### Q284) Minimum Path Sum
-- **Concept:** `dp[i][j] = grid + min(up, left)`.
-- **C++ Code:**
-```cpp
-class Solution { public: int minPathSum(vector<vector<int>>& grid) {
-    int m=grid.size(), n=grid[0].size();
-    for(int i=0; i<m; i++) for(int j=0; j<n; j++) {
-        if(i==0 && j>0) grid[i][j] += grid[i][j-1];
-        else if(j==0 && i>0) grid[i][j] += grid[i-1][j];
-        else if(i>0 && j>0) grid[i][j] += min(grid[i-1][j], grid[i][j-1]);
-    } return grid[m-1][n-1];
-}};
-```
-
-### Q285) Triangle
-- **Problem:** Min path sum from top to bottom.
-- **Algo:** Bottom-up DP modifies the row below.
-- **C++ Code:**
-```cpp
-class Solution { public: int minimumTotal(vector<vector<int>>& tri) {
-    for(int i = tri.size() - 2; i >= 0; i--) for(int j = 0; j < tri[i].size(); j++) {
-        tri[i][j] += min(tri[i+1][j], tri[i+1][j+1]);
-    } return tri[0][0];
-}};
-```
-
-### Q286) Count Square Submatrices with All Ones
-- **Concept:** `dp[i][j] = min(up, left, diag_up_left) + 1`.
-- **C++ Code:**
-```cpp
-class Solution { public: int countSquares(vector<vector<int>>& matrix) {
-    int count = 0, m = matrix.size(), n = matrix[0].size();
-    for(int i=0; i<m; i++) for(int j=0; j<n; j++) {
-        if(matrix[i][j] && i && j) matrix[i][j] = min({matrix[i-1][j], matrix[i][j-1], matrix[i-1][j-1]}) + 1;
-        count += matrix[i][j];
-    } return count;
-}};
-```
-
-### Q287) Maximum Profit in Job Scheduling
-- **Concept:** Sort by end time, DP + Binary Search.
-- **C++ Code:**
-```cpp
-class Solution { public: int jobScheduling(vector<int>& s, vector<int>& e, vector<int>& p) {
-    vector<vector<int>> jobs; for(int i=0; i<s.size(); i++) jobs.push_back({e[i], s[i], p[i]});
-    sort(jobs.begin(), jobs.end()); map<int, int> dp; dp[0] = 0;
-    for(auto& j : jobs) {
-        int val = prev(dp.upper_bound(j[1]))->second + j[2];
-        if(val > dp.rbegin()->second) dp[j[0]] = val;
-    } return dp.rbegin()->second;
-}};
-```
-
-*(Remaining Grid DP: Burst Balloons, Longest Increasing Path...)*
-
-### Q288) Burst Balloons
-- **Concept:** Interval DP. Balloon `i` is the LAST to burst.
-- **C++ Code:**
-```cpp
-class Solution { public: int maxCoins(vector<int>& nums) {
-    nums.insert(nums.begin(), 1); nums.push_back(1); int n = nums.size();
-    vector<vector<int>> dp(n, vector<int>(n, 0));
-    for(int len = 2; len < n; len++) for(int l = 0; l < n - len; l++) {
-        int r = l + len;
-        for(int i = l + 1; i < r; i++) dp[l][r] = max(dp[l][r], nums[l]*nums[i]*nums[r] + dp[l][i] + dp[i][r]);
-    } return dp[0][n-1];
-}};
-```
-
-### Q289) Longest Increasing Path in a Matrix
-- **Concept:** DFS + Memoization.
-- **C++ Code:**
+**Tabulation (Space Optimized 1D Array):**
 ```cpp
 class Solution {
-    int dfs(vector<vector<int>>& m, vector<vector<int>>& dp, int i, int j) {
-        if(dp[i][j]) return dp[i][j];
-        int dirs[4][2]={{0,1},{0,-1},{1,0},{-1,0}}, maxL = 1;
-        for(auto d:dirs) { int x=i+d[0], y=j+d[1]; if(x>=0&&x<m.size()&&y>=0&&y<m[0].size()&&m[x][y]>m[i][j]) maxL = max(maxL, 1+dfs(m,dp,x,y)); }
+public:
+    int uniquePathsWithObstacles(vector<vector<int>>& og) {
+        if (og[0][0] == 1) return 0;
+        
+        int m = og.size();
+        int n = og[0].size();
+        vector<int> dp(n, 0);
+        dp[0] = 1; // Start position
+        
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (og[i][j] == 1) {
+                    dp[j] = 0;
+                } else if (j > 0) {
+                    dp[j] += dp[j - 1];
+                }
+            }
+        }
+        return dp[n - 1];
+    }
+};
+```
+- **Complexity:** T: O(M * N) | S: O(N)
+
+---
+
+### Q284) Minimum Path Sum
+- **Problem:** Find a path from top left to bottom right which minimizes the sum of all numbers along its path.
+- **Concept / Optimal Algo:** `dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])`. Can modify the grid in-place to save space.
+- **C++ Code:**
+
+**Tabulation (In-place Grid Modification):**
+```cpp
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == 0 && j > 0) {
+                    grid[i][j] += grid[i][j - 1];
+                } else if (j == 0 && i > 0) {
+                    grid[i][j] += grid[i - 1][j];
+                } else if (i > 0 && j > 0) {
+                    grid[i][j] += min(grid[i - 1][j], grid[i][j - 1]);
+                }
+            }
+        }
+        return grid[m - 1][n - 1];
+    }
+};
+```
+- **Complexity:** T: O(M * N) | S: O(1)
+
+---
+
+### Q285) Triangle
+- **Problem:** Find the minimum path sum from top to bottom of a triangle array.
+- **Concept / Optimal Algo:** Work bottom-up. Modify the row below directly into the current row. `triangle[i][j] += min(triangle[i+1][j], triangle[i+1][j+1])`.
+- **C++ Code:**
+
+**Tabulation (Bottom-Up In-place):**
+```cpp
+class Solution {
+public:
+    int minimumTotal(vector<vector<int>>& triangle) {
+        int n = triangle.size();
+        
+        // Start from the second to last row and move upwards
+        for (int i = n - 2; i >= 0; i--) {
+            for (int j = 0; j < triangle[i].size(); j++) {
+                triangle[i][j] += min(triangle[i + 1][j], triangle[i + 1][j + 1]);
+            }
+        }
+        return triangle[0][0];
+    }
+};
+```
+- **Complexity:** T: O(N^2) | S: O(1)
+
+---
+
+### Q286) Count Square Submatrices with All Ones
+- **Problem:** Count how many square submatrices have all ones.
+- **Concept / Optimal Algo:** `dp[i][j] = min(up, left, diag_up_left) + 1`. The value at `dp[i][j]` is exactly the number of squares ending at `(i,j)`. Sum them all up.
+- **C++ Code:**
+
+**Tabulation (In-place Matrix):**
+```cpp
+class Solution {
+public:
+    int countSquares(vector<vector<int>>& matrix) {
+        int count = 0;
+        int m = matrix.size();
+        int n = matrix[0].size();
+        
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (matrix[i][j] == 1 && i > 0 && j > 0) {
+                    matrix[i][j] = min({matrix[i - 1][j], matrix[i][j - 1], matrix[i - 1][j - 1]}) + 1;
+                }
+                count += matrix[i][j];
+            }
+        }
+        return count;
+    }
+};
+```
+- **Complexity:** T: O(M * N) | S: O(1)
+
+---
+
+### Q287) Maximum Profit in Job Scheduling
+- **Problem:** Find max profit scheduling non-overlapping jobs `(startTime, endTime, profit)`.
+- **Concept / Optimal Algo:** Sort jobs by `endTime`. DP map stores `{endTime -> maxProfit}`. For each job, binary search the latest job ending before its start time, add current profit. If it's greater than the max profit seen so far, record it.
+- **C++ Code:**
+
+**Tabulation + Binary Search (Optimal):**
+```cpp
+class Solution {
+public:
+    int jobScheduling(vector<int>& startTime, vector<int>& endTime, vector<int>& profit) {
+        int n = startTime.size();
+        vector<vector<int>> jobs;
+        
+        for (int i = 0; i < n; i++) {
+            jobs.push_back({endTime[i], startTime[i], profit[i]});
+        }
+        // Sort by end time
+        sort(jobs.begin(), jobs.end());
+        
+        map<int, int> dp;
+        dp[0] = 0; // Base case
+        
+        for (auto& job : jobs) {
+            int e = job[0], s = job[1], p = job[2];
+            // Find max profit up to start time
+            auto it = prev(dp.upper_bound(s));
+            int currProfit = it->second + p;
+            
+            // If we found a strictly better profit, add it
+            if (currProfit > dp.rbegin()->second) {
+                dp[e] = currProfit;
+            }
+        }
+        return dp.rbegin()->second;
+    }
+};
+```
+- **Complexity:** T: O(N log N) | S: O(N)
+
+---
+
+### Q288) Burst Balloons
+- **Problem:** Maximize coins by bursting balloons. `coins = nums[left] * nums[i] * nums[right]`.
+- **Concept / Optimal Algo:** Interval DP. Instead of picking which balloon to burst first, pick which balloon to burst **LAST** in the range `[l, r]`.
+- **C++ Code:**
+
+**Memoization (Top-Down):**
+```cpp
+class Solution {
+    int solve(int l, int r, vector<int>& nums, vector<vector<int>>& memo) {
+        if (l > r) return 0;
+        if (memo[l][r] != -1) return memo[l][r];
+        
+        int maxCoins = 0;
+        for (int i = l; i <= r; i++) {
+            int coins = nums[l - 1] * nums[i] * nums[r + 1] 
+                      + solve(l, i - 1, nums, memo) 
+                      + solve(i + 1, r, nums, memo);
+            maxCoins = max(maxCoins, coins);
+        }
+        return memo[l][r] = maxCoins;
+    }
+public:
+    int maxCoins(vector<int>& nums) {
+        nums.insert(nums.begin(), 1);
+        nums.push_back(1);
+        vector<vector<int>> memo(nums.size(), vector<int>(nums.size(), -1));
+        return solve(1, nums.size() - 2, nums, memo);
+    }
+};
+```
+
+**Tabulation (Bottom-Up):**
+```cpp
+class Solution {
+public:
+    int maxCoins(vector<int>& nums) {
+        nums.insert(nums.begin(), 1);
+        nums.push_back(1);
+        int n = nums.size();
+        
+        vector<vector<int>> dp(n, vector<int>(n, 0));
+        
+        for (int len = 2; len < n; len++) {
+            for (int l = 0; l < n - len; l++) {
+                int r = l + len;
+                for (int i = l + 1; i < r; i++) {
+                    dp[l][r] = max(dp[l][r], 
+                                   nums[l] * nums[i] * nums[r] + dp[l][i] + dp[i][r]);
+                }
+            }
+        }
+        return dp[0][n - 1];
+    }
+};
+```
+- **Complexity:** T: O(N^3) | S: O(N^2)
+
+---
+
+### Q289) Longest Increasing Path in a Matrix
+- **Problem:** Find the length of the longest increasing path in a matrix.
+- **Concept / Optimal Algo:** DFS + Memoization is the most natural way. Compute the max increasing path starting from every cell.
+- **C++ Code:**
+
+**Memoization (DFS Top-Down):**
+```cpp
+class Solution {
+    int dirs[4][2] = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    
+    int dfs(vector<vector<int>>& matrix, vector<vector<int>>& dp, int i, int j) {
+        if (dp[i][j] != 0) return dp[i][j];
+        
+        int maxL = 1;
+        for (auto& d : dirs) {
+            int x = i + d[0];
+            int y = j + d[1];
+            
+            if (x >= 0 && x < matrix.size() && y >= 0 && y < matrix[0].size() 
+                && matrix[x][y] > matrix[i][j]) {
+                maxL = max(maxL, 1 + dfs(matrix, dp, x, y));
+            }
+        }
         return dp[i][j] = maxL;
     }
-public: int longestIncreasingPath(vector<vector<int>>& matrix) {
-    int maxP = 0, m = matrix.size(), n = matrix[0].size(); vector<vector<int>> dp(m, vector<int>(n, 0));
-    for(int i=0; i<m; i++) for(int j=0; j<n; j++) maxP = max(maxP, dfs(matrix, dp, i, j));
-    return maxP;
-}};
+public:
+    int longestIncreasingPath(vector<vector<int>>& matrix) {
+        if (matrix.empty()) return 0;
+        int m = matrix.size(), n = matrix[0].size();
+        vector<vector<int>> dp(m, vector<int>(n, 0));
+        
+        int maxPath = 0;
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                maxPath = max(maxPath, dfs(matrix, dp, i, j));
+            }
+        }
+        return maxPath;
+    }
+};
 ```
+- **Complexity:** T: O(M * N) | S: O(M * N)
+
+---
 
 ### String DP
 
 ### Q290) Longest Common Subsequence
-- **Algo:** `if (s1[i]==s2[j]) dp[i][j] = 1 + dp[i-1][j-1]` else `max`.
+- **Problem:** Length of the longest common subsequence of two strings.
+- **Concept / Optimal Algo:** If `s1[i-1] == s2[j-1]`, then `dp[i][j] = 1 + dp[i-1][j-1]`. Else, take the `max(dp[i-1][j], dp[i][j-1])`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
-class Solution { public: int longestCommonSubsequence(string t1, string t2) {
-    int m = t1.size(), n = t2.size(); vector<vector<int>> dp(m+1, vector<int>(n+1, 0));
-    for(int i=1; i<=m; i++) for(int j=1; j<=n; j++) dp[i][j] = t1[i-1]==t2[j-1] ? 1+dp[i-1][j-1] : max(dp[i-1][j], dp[i][j-1]);
-    return dp[m][n];
-}};
+class Solution {
+    int solve(string& t1, string& t2, int i, int j, vector<vector<int>>& memo) {
+        if (i == 0 || j == 0) return 0;
+        if (memo[i][j] != -1) return memo[i][j];
+        
+        if (t1[i - 1] == t2[j - 1]) {
+            return memo[i][j] = 1 + solve(t1, t2, i - 1, j - 1, memo);
+        }
+        return memo[i][j] = max(solve(t1, t2, i - 1, j, memo), 
+                                solve(t1, t2, i, j - 1, memo));
+    }
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.size(), n = text2.size();
+        vector<vector<int>> memo(m + 1, vector<int>(n + 1, -1));
+        return solve(text1, text2, m, n, memo);
+    }
+};
 ```
+
+**Tabulation (Bottom-Up):**
+```cpp
+class Solution {
+public:
+    int longestCommonSubsequence(string t1, string t2) {
+        int m = t1.size(), n = t2.size();
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+        
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (t1[i - 1] == t2[j - 1]) {
+                    dp[i][j] = 1 + dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+- **Complexity:** T: O(M * N) | S: O(M * N)
+
+---
 
 ### Q291) Edit Distance
-- **Algo:** `dp[i][j] = 1 + min(insert, delete, replace)`.
+- **Problem:** Minimum operations (insert, delete, replace) to convert word1 to word2.
+- **Concept / Optimal Algo:** `dp[i][j] = 1 + min(insert, delete, replace)`. Base cases fill out rows/cols where strings are empty.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up):**
 ```cpp
-class Solution { public: int minDistance(string w1, string w2) {
-    int m = w1.size(), n = w2.size(); vector<vector<int>> dp(m+1, vector<int>(n+1));
-    for(int i=0; i<=m; i++) for(int j=0; j<=n; j++) {
-        if(i==0) dp[i][j] = j; else if(j==0) dp[i][j] = i;
-        else if(w1[i-1] == w2[j-1]) dp[i][j] = dp[i-1][j-1];
-        else dp[i][j] = 1 + min({dp[i-1][j], dp[i][j-1], dp[i-1][j-1]});
-    } return dp[m][n];
-}};
+class Solution {
+public:
+    int minDistance(string w1, string w2) {
+        int m = w1.size(), n = w2.size();
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1));
+        
+        for (int i = 0; i <= m; i++) {
+            for (int j = 0; j <= n; j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else if (w1[i - 1] == w2[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = 1 + min({dp[i - 1][j],    // Delete
+                                        dp[i][j - 1],    // Insert
+                                        dp[i - 1][j - 1] // Replace
+                                       });
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
 ```
+- **Complexity:** T: O(M * N) | S: O(M * N)
+
+---
 
 ### Q292) Decode Ways
-- **Algo:** Check single digit valid, double digit valid. Fib sequence.
+- **Problem:** Count ways to decode a string of digits (A=1, B=2 ... Z=26).
+- **Concept / Optimal Algo:** Fibonacci-like. Check if single digit (1-9) is valid, then check if double digit (10-26) is valid. Add valid paths.
 - **C++ Code:**
+
+**Tabulation (Space Optimized):**
 ```cpp
-class Solution { public: int numDecodings(string s) {
-    if(s.empty() || s[0]=='0') return 0;
-    int n = s.size(), dp1 = 1, dp2 = 1;
-    for(int i=1; i<n; i++) {
-        int curr = 0; if(s[i] != '0') curr += dp1;
-        int two = stoi(s.substr(i-1, 2)); if(two >= 10 && two <= 26) curr += dp2;
-        dp2 = dp1; dp1 = curr;
-    } return dp1;
-}};
+class Solution {
+public:
+    int numDecodings(string s) {
+        if (s.empty() || s[0] == '0') return 0;
+        
+        int n = s.size();
+        int dp2 = 1; // i-2
+        int dp1 = 1; // i-1
+        
+        for (int i = 1; i < n; i++) {
+            int curr = 0;
+            // 1-digit decode
+            if (s[i] != '0') {
+                curr += dp1;
+            }
+            // 2-digit decode
+            int twoDigit = stoi(s.substr(i - 1, 2));
+            if (twoDigit >= 10 && twoDigit <= 26) {
+                curr += dp2;
+            }
+            
+            dp2 = dp1;
+            dp1 = curr;
+        }
+        return dp1;
+    }
+};
 ```
+- **Complexity:** T: O(N) | S: O(1)
+
+---
 
 ### Q293) Word Break
-- **Algo:** DP array if word can be formed up to index.
+- **Problem:** Check if a string can be segmented into words from a dictionary.
+- **Concept / Optimal Algo:** `dp[i]` is true if a substring ending at `i` is valid and the prefix `dp[j]` before it is also valid.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up):**
 ```cpp
-class Solution { public: bool wordBreak(string s, vector<string>& wordDict) {
-    unordered_set<string> dict(wordDict.begin(), wordDict.end());
-    vector<bool> dp(s.length() + 1, false); dp[0] = true;
-    for(int i=1; i<=s.length(); i++) for(int j=i-1; j>=0; j--) {
-        if(dp[j] && dict.count(s.substr(j, i-j))) { dp[i] = true; break; }
-    } return dp.back();
-}};
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string> dict(wordDict.begin(), wordDict.end());
+        int n = s.length();
+        vector<bool> dp(n + 1, false);
+        dp[0] = true; // Base case: empty string
+        
+        for (int i = 1; i <= n; i++) {
+            for (int j = i - 1; j >= 0; j--) {
+                if (dp[j] && dict.count(s.substr(j, i - j))) {
+                    dp[i] = true;
+                    break; // Stop looking once we found a valid split
+                }
+            }
+        }
+        return dp.back();
+    }
+};
 ```
+- **Complexity:** T: O(N^3) (due to substring check) | S: O(N)
+
+---
 
 ### Q294) Maximum Number of Points with Cost (Missed 2D DP)
-- **Problem:** Max points picking one cell per row. Moving costs `abs(c1 - c2)`.
-- **Concept:** Left/Right Sweep DP.
-- **Algo:** Instead of checking all columns O(N^2), do a left-to-right pass `max(prev, dp[c] + c)` and right-to-left pass.
+- **Problem:** Pick one cell per row. Maximize sum, but subtract distance penalty `abs(c1 - c2)`.
+- **Concept / Optimal Algo:** A pure DP `O(M * N^2)` will TLE. Use Left-to-Right and Right-to-Left pass DP. The max valid from the left is `max(left[c-1] - 1, prev_dp[c])`. Same for right. Current is `max(left, right) + points[r][c]`.
 - **C++ Code:**
+
+**Tabulation (Optimal Left/Right Sweep):**
 ```cpp
-class Solution { public: long long maxPoints(vector<vector<int>>& P) {
-    long long m = P.size(), n = P[0].size(); vector<long long> dp(n);
-    for(int i=0; i<n; i++) dp[i] = P[0][i];
-    for(int r=1; r<m; r++) {
-        vector<long long> left(n), right(n), curr(n);
-        left[0] = dp[0]; for(int c=1; c<n; c++) left[c] = max(left[c-1]-1, dp[c]);
-        right[n-1] = dp[n-1]; for(int c=n-2; c>=0; c--) right[c] = max(right[c+1]-1, dp[c]);
-        for(int c=0; c<n; c++) curr[c] = P[r][c] + max(left[c], right[c]);
-        dp = curr;
-    } return *max_element(dp.begin(), dp.end());
-}};
+class Solution {
+public:
+    long long maxPoints(vector<vector<int>>& P) {
+        long long m = P.size();
+        long long n = P[0].size();
+        vector<long long> dp(n);
+        
+        for (int i = 0; i < n; i++) dp[i] = P[0][i];
+        
+        for (int r = 1; r < m; r++) {
+            vector<long long> left(n), right(n), curr(n);
+            
+            // Left to right sweep
+            left[0] = dp[0];
+            for (int c = 1; c < n; c++) {
+                left[c] = max(left[c - 1] - 1, dp[c]);
+            }
+            
+            // Right to left sweep
+            right[n - 1] = dp[n - 1];
+            for (int c = n - 2; c >= 0; c--) {
+                right[c] = max(right[c + 1] - 1, dp[c]);
+            }
+            
+            // Current row evaluation
+            for (int c = 0; c < n; c++) {
+                curr[c] = P[r][c] + max(left[c], right[c]);
+            }
+            dp = curr;
+        }
+        
+        return *max_element(dp.begin(), dp.end());
+    }
+};
 ```
-- **Complexity:** T: O(M*N) | S: O(N)
+- **Complexity:** T: O(M * N) | S: O(N)
+
+---
 
 ### Q295) Cherry Pickup (Missed 2D DP)
-- **Problem:** Max cherries from (0,0) to (n-1,n-1) and back.
-- **Concept:** 3D DP (Two paths at once).
-- **Algo:** `dp[r1][c1][c2]` since `r1+c1 = r2+c2` (same steps). Move both simultaneously.
+- **Problem:** Collect max cherries going (0,0) to (n-1,n-1) and returning back.
+- **Concept / Optimal Algo:** Instead of going down then up, simulate TWO people going DOWN simultaneously. States: `(r1, c1, r2, c2)`. Since they move at the same speed, `r1 + c1 = r2 + c2`, reducing it to a 3D DP `(r1, c1, c2)`.
 - **C++ Code:**
+
+**Memoization (Top-Down 3D DP):**
 ```cpp
 class Solution {
     int dp[50][50][50];
+    
     int solve(vector<vector<int>>& grid, int n, int r1, int c1, int c2) {
-        int r2 = r1 + c1 - c2; if(r1>=n||r2>=n||c1>=n||c2>=n||grid[r1][c1]==-1||grid[r2][c2]==-1) return -1e9;
-        if(r1==n-1&&c1==n-1) return grid[r1][c1]; if(dp[r1][c1][c2] != -1) return dp[r1][c1][c2];
+        int r2 = r1 + c1 - c2; 
+        
+        // Out of bounds or obstacle hit
+        if (r1 >= n || r2 >= n || c1 >= n || c2 >= n || grid[r1][c1] == -1 || grid[r2][c2] == -1) {
+            return -1e9;
+        }
+        
+        // Both reached destination
+        if (r1 == n - 1 && c1 == n - 1) return grid[r1][c1]; 
+        
+        if (dp[r1][c1][c2] != -1) return dp[r1][c1][c2];
+        
+        // Cherries collected at current step
         int ans = grid[r1][c1] + (c1 != c2 ? grid[r2][c2] : 0);
-        ans += max({solve(grid,n,r1+1,c1,c2), solve(grid,n,r1+1,c1,c2+1), solve(grid,n,r1,c1+1,c2), solve(grid,n,r1,c1+1,c2+1)});
+        
+        // 4 Possible Moves combinations (Down-Down, Down-Right, Right-Down, Right-Right)
+        int bestNext = max({
+            solve(grid, n, r1 + 1, c1, c2),
+            solve(grid, n, r1 + 1, c1, c2 + 1),
+            solve(grid, n, r1, c1 + 1, c2),
+            solve(grid, n, r1, c1 + 1, c2 + 1)
+        });
+        
+        ans += bestNext;
         return dp[r1][c1][c2] = ans;
     }
-public: int cherryPickup(vector<vector<int>>& grid) {
-    memset(dp, -1, sizeof(dp)); return max(0, solve(grid, grid.size(), 0, 0, 0));
-}};
+public:
+    int cherryPickup(vector<vector<int>>& grid) {
+        memset(dp, -1, sizeof(dp));
+        return max(0, solve(grid, grid.size(), 0, 0, 0));
+    }
+};
 ```
 - **Complexity:** T: O(N^3) | S: O(N^3)
+
+---
 
 ### String DP (Continued)
 
 ### Q296) Longest Palindromic Subsequence
-- **Problem:** Longest subseq that is a palindrome.
-- **Algo:** LCS of string `s` and its reverse.
+- **Problem:** Longest subsequence that reads the same backward as forward.
+- **Concept / Optimal Algo:** A string's longest palindromic subsequence is simply the Longest Common Subsequence (LCS) of the string and its reversed version.
 - **C++ Code:**
+
+**Tabulation (Using LCS Logic):**
 ```cpp
-class Solution { public: int longestPalindromeSubseq(string s) {
-    string rev = s; reverse(rev.begin(), rev.end()); int n = s.size();
-    vector<vector<int>> dp(n+1, vector<int>(n+1, 0));
-    for(int i=1; i<=n; i++) for(int j=1; j<=n; j++) dp[i][j] = s[i-1]==rev[j-1] ? 1+dp[i-1][j-1] : max(dp[i-1][j], dp[i][j-1]);
-    return dp[n][n];
-}};
+class Solution {
+public:
+    int longestPalindromeSubseq(string s) {
+        string rev = s;
+        reverse(rev.begin(), rev.end());
+        int n = s.size();
+        
+        vector<vector<int>> dp(n + 1, vector<int>(n + 1, 0));
+        
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (s[i - 1] == rev[j - 1]) {
+                    dp[i][j] = 1 + dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        return dp[n][n];
+    }
+};
 ```
 - **Complexity:** T: O(N^2) | S: O(N^2)
 
+---
+
 ### Q297) Interleaving String
-- **Problem:** Check if `s3` is formed by interleaving `s1` and `s2`.
-- **Algo:** `dp[i][j]` = true if `s1[0..i]` and `s2[0..j]` form `s3[0..i+j]`.
+- **Problem:** Determine if `s3` is formed by interleaving `s1` and `s2`.
+- **Concept / Optimal Algo:** 2D DP. `dp[i][j]` = true if `s1[0..i]` and `s2[0..j]` can interleave to form `s3[0..i+j]`.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up):**
 ```cpp
-class Solution { public: bool isInterleave(string s1, string s2, string s3) {
-    int m = s1.size(), n = s2.size(); if(m + n != s3.size()) return false;
-    vector<vector<bool>> dp(m+1, vector<bool>(n+1, false)); dp[0][0] = true;
-    for(int i=0; i<=m; i++) for(int j=0; j<=n; j++) {
-        if(i > 0 && s1[i-1] == s3[i+j-1]) dp[i][j] = dp[i][j] || dp[i-1][j];
-        if(j > 0 && s2[j-1] == s3[i+j-1]) dp[i][j] = dp[i][j] || dp[i][j-1];
-    } return dp[m][n];
-}};
+class Solution {
+public:
+    bool isInterleave(string s1, string s2, string s3) {
+        int m = s1.size();
+        int n = s2.size();
+        
+        if (m + n != s3.size()) return false;
+        
+        vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+        dp[0][0] = true;
+        
+        for (int i = 0; i <= m; i++) {
+            for (int j = 0; j <= n; j++) {
+                if (i > 0 && s1[i - 1] == s3[i + j - 1]) {
+                    dp[i][j] = dp[i][j] || dp[i - 1][j];
+                }
+                if (j > 0 && s2[j - 1] == s3[i + j - 1]) {
+                    dp[i][j] = dp[i][j] || dp[i][j - 1];
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
 ```
-- **Complexity:** T: O(M*N) | S: O(M*N)
+- **Complexity:** T: O(M * N) | S: O(M * N)
+
+---
 
 ### Q298) Wildcard Matching
-- **Problem:** Match with `?` (any char) and `*` (any sequence).
-- **Algo:** 2D DP. If `*`, `dp[i][j] = dp[i-1][j] || dp[i][j-1]`.
+- **Problem:** String matching with `?` (matches any char) and `*` (matches any sequence).
+- **Concept / Optimal Algo:** 2D DP. If `*`, we can ignore the `*` (`dp[i][j-1]`) or use it to match one/more chars (`dp[i-1][j]`).
 - **C++ Code:**
+
+**Tabulation (Bottom-Up):**
 ```cpp
-class Solution { public: bool isMatch(string s, string p) {
-    int m = s.size(), n = p.size(); vector<vector<bool>> dp(m+1, vector<bool>(n+1, false));
-    dp[0][0] = true; for(int j=1; j<=n; j++) if(p[j-1] == '*') dp[0][j] = dp[0][j-1];
-    for(int i=1; i<=m; i++) for(int j=1; j<=n; j++) {
-        if(p[j-1] == s[i-1] || p[j-1] == '?') dp[i][j] = dp[i-1][j-1];
-        else if(p[j-1] == '*') dp[i][j] = dp[i-1][j] || dp[i][j-1];
-    } return dp[m][n];
-}};
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        int m = s.size(), n = p.size();
+        vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+        
+        dp[0][0] = true;
+        
+        // Initialize for patterns starting with '*'
+        for (int j = 1; j <= n; j++) {
+            if (p[j - 1] == '*') {
+                dp[0][j] = dp[0][j - 1];
+            }
+        }
+        
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (p[j - 1] == s[i - 1] || p[j - 1] == '?') {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else if (p[j - 1] == '*') {
+                    dp[i][j] = dp[i - 1][j] || dp[i][j - 1];
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
 ```
-- **Complexity:** T: O(M*N) | S: O(M*N)
+- **Complexity:** T: O(M * N) | S: O(M * N)
+
+---
 
 ### Q299) Distinct Subsequences
 - **Problem:** Number of distinct subsequences of `s` that equal `t`.
-- **Algo:** `dp[i][j] = dp[i-1][j] + (s[i-1]==t[j-1] ? dp[i-1][j-1] : 0)`.
+- **Concept / Optimal Algo:** If `s[i-1] == t[j-1]`, we can either use the character (so `dp[i-1][j-1]`) or skip it (`dp[i-1][j]`). Optimized to 1D DP.
 - **C++ Code:**
+
+**Tabulation (Space Optimized 1D Array):**
 ```cpp
-class Solution { public: int numDistinct(string s, string t) {
-    int m = s.size(), n = t.size(); vector<double> dp(n+1, 0); dp[0] = 1;
-    for(int i=1; i<=m; i++) for(int j=n; j>=1; j--) if(s[i-1] == t[j-1]) dp[j] += dp[j-1];
-    return dp[n];
-}};
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        int m = s.size();
+        int n = t.size();
+        
+        // Use unsigned int to prevent potential overflow before modulo/constraints
+        vector<unsigned int> dp(n + 1, 0); 
+        dp[0] = 1;
+        
+        // Walk string s
+        for (int i = 1; i <= m; i++) {
+            // Traverse t backwards for space optimization
+            for (int j = n; j >= 1; j--) {
+                if (s[i - 1] == t[j - 1]) {
+                    dp[j] += dp[j - 1];
+                }
+            }
+        }
+        return dp[n];
+    }
+};
 ```
-- **Complexity:** T: O(M*N) | S: O(N)
+- **Complexity:** T: O(M * N) | S: O(N)
 
 ### Q300) Palindrome Partitioning II
-- **Problem:** Min cuts to partition string such that every substring is palindrome.
-- **Algo:** 2D Palindrome check + 1D DP for min cuts.
+- **Problem:** Min cuts to partition a string such that every substring is a palindrome.
+- **Concept / Optimal Algo:** Combine a 2D Palindrome checking DP with a 1D DP for minimum cuts. `dp[i]` stores the min cuts for the prefix of length `i`.
 - **C++ Code:**
+
+**Tabulation (Bottom-Up 2D + 1D DP):**
 ```cpp
-class Solution { public: int minCut(string s) {
-    int n = s.size(); vector<vector<bool>> pal(n, vector<bool>(n, false)); vector<int> dp(n);
-    for(int i=0; i<n; i++) {
-        int minC = i;
-        for(int j=0; j<=i; j++) {
-            if(s[j]==s[i] && (i-j<2 || pal[j+1][i-1])) {
-                pal[j][i] = true; minC = j==0 ? 0 : min(minC, dp[j-1] + 1);
+class Solution {
+public:
+    int minCut(string s) {
+        int n = s.size();
+        // pal[j][i] is true if s[j...i] is a palindrome
+        vector<vector<bool>> pal(n, vector<bool>(n, false));
+        // dp[i] stores min cuts for substring s[0...i]
+        vector<int> dp(n, 0);
+        
+        for (int i = 0; i < n; i++) {
+            int minCuts = i; // Max cuts is i (cutting every character)
+            for (int j = 0; j <= i; j++) {
+                // If characters match and (length <= 2 or inner string is palindrome)
+                if (s[j] == s[i] && (i - j < 2 || pal[j + 1][i - 1])) {
+                    pal[j][i] = true;
+                    // If j == 0, the whole string s[0...i] is a palindrome, 0 cuts needed
+                    if (j == 0) {
+                        minCuts = 0;
+                    } else {
+                        minCuts = min(minCuts, dp[j - 1] + 1);
+                    }
+                }
             }
-        } dp[i] = minC;
-    } return dp[n-1];
-}};
+            dp[i] = minCuts;
+        }
+        return dp[n - 1];
+    }
+};
 ```
 - **Complexity:** T: O(N^2) | S: O(N^2)
+
+---
 
 ### Tree/Graph DP
 
 ### Q301) House Robber III
-- **Problem:** Rob max money in binary tree without triggering adjacent nodes.
-- **Algo:** DFS returns `{rob_root, skip_root}`.
+- **Problem:** Rob max money in a binary tree without triggering adjacent (parent-child) nodes.
+- **Concept / Optimal Algo:** Tree DP using Post-order DFS. For each node, return a pair: `{rob_root, skip_root}`.
 - **C++ Code:**
+
+**Recursive Tree DP (Optimal - No explicit Memo map needed):**
 ```cpp
 class Solution {
+    // Returns pair: {max money if rob this node, max money if skip this node}
     pair<int, int> dfs(TreeNode* root) {
-        if(!root) return {0,0};
-        auto l = dfs(root->left), r = dfs(root->right);
-        int rob = root->val + l.second + r.second;
-        int skip = max(l.first, l.second) + max(r.first, r.second);
+        if (!root) return {0, 0};
+        
+        auto left = dfs(root->left);
+        auto right = dfs(root->right);
+        
+        // If we rob this node, we CANNOT rob its children
+        int rob = root->val + left.second + right.second;
+        
+        // If we skip this node, we take the max of robbing or skipping its children
+        int skip = max(left.first, left.second) + max(right.first, right.second);
+        
         return {rob, skip};
     }
-public: int rob(TreeNode* root) { auto res = dfs(root); return max(res.first, res.second); }
+public:
+    int rob(TreeNode* root) {
+        auto res = dfs(root);
+        return max(res.first, res.second);
+    }
 };
 ```
 - **Complexity:** T: O(N) | S: O(H)
 
+---
+
 ### Q302) Unique Binary Search Trees II
-- **Problem:** Generate all structurally unique BSTs.
-- **Algo:** Recursive DP taking each `i` as root and combining left and right subtrees.
+- **Problem:** Generate all structurally unique BSTs containing values from `1` to `n`.
+- **Concept / Optimal Algo:** Recursive DP taking each `i` as the root, then recursively generating all left subtrees from `1` to `i-1` and all right subtrees from `i+1` to `n`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
 class Solution {
+    map<pair<int, int>, vector<TreeNode*>> memo;
+    
     vector<TreeNode*> solve(int l, int r) {
-        if(l > r) return {nullptr}; vector<TreeNode*> res;
-        for(int i=l; i<=r; i++) {
-            auto lefts = solve(l, i-1), rights = solve(i+1, r);
-            for(auto L : lefts) for(auto R : rights) {
-                TreeNode* root = new TreeNode(i); root->left = L; root->right = R; res.push_back(root);
+        if (l > r) return {nullptr};
+        if (memo.count({l, r})) return memo[{l, r}];
+        
+        vector<TreeNode*> res;
+        for (int i = l; i <= r; i++) {
+            auto lefts = solve(l, i - 1);
+            auto rights = solve(i + 1, r);
+            
+            for (auto L : lefts) {
+                for (auto R : rights) {
+                    TreeNode* root = new TreeNode(i);
+                    root->left = L;
+                    root->right = R;
+                    res.push_back(root);
+                }
             }
-        } return res;
+        }
+        return memo[{l, r}] = res;
     }
-public: vector<TreeNode*> generateTrees(int n) { return n==0 ? vector<TreeNode*>() : solve(1, n); }
+public:
+    vector<TreeNode*> generateTrees(int n) {
+        if (n == 0) return vector<TreeNode*>();
+        return solve(1, n);
+    }
 };
 ```
 - **Complexity:** T: O(Catalan(N)) | S: O(Catalan(N))
 
+---
+
 ### Q303) Number of Ways to Arrive at Destination
-- **Problem:** Paths reaching end with shortest time.
-- **Algo:** Dijkstra + DP counting array tracking path frequencies modulo `1e9+7`.
+- **Problem:** Find the total number of paths that reach the end in the absolute shortest time.
+- **Concept / Optimal Algo:** Modified Dijkstra's Algorithm with a `ways` array. Track `dist[v]`. If we find a strictly shorter path, update `dist[v]` and copy `ways[u]`. If we find an equal shortest path, add `ways[u]` to `ways[v]`.
 - **C++ Code:**
+
+**Dijkstra DP (Bottom-Up Graph Traversal):**
 ```cpp
-class Solution { public: int countPaths(int n, vector<vector<int>>& roads) {
-    vector<vector<pair<int, long long>>> adj(n); for(auto& r:roads){ adj[r[0]].push_back({r[1], r[2]}); adj[r[1]].push_back({r[0], r[2]}); }
-    vector<long long> dist(n, 1e18), ways(n, 0); dist[0]=0; ways[0]=1; int mod = 1e9+7;
-    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq; pq.push({0,0});
-    while(!pq.empty()) {
-        auto [d, u] = pq.top(); pq.pop(); if(d > dist[u]) continue;
-        for(auto& edge : adj[u]) {
-            int v = edge.first; long long w = edge.second;
-            if(d+w < dist[v]) { dist[v] = d+w; ways[v] = ways[u]; pq.push({dist[v], v}); }
-            else if(d+w == dist[v]) ways[v] = (ways[v] + ways[u]) % mod;
+class Solution {
+public:
+    int countPaths(int n, vector<vector<int>>& roads) {
+        vector<vector<pair<int, long long>>> adj(n);
+        for (auto& r : roads) {
+            adj[r[0]].push_back({r[1], r[2]});
+            adj[r[1]].push_back({r[0], r[2]});
         }
-    } return ways[n-1];
-}};
+        
+        vector<long long> dist(n, 1e18);
+        vector<long long> ways(n, 0);
+        
+        dist[0] = 0;
+        ways[0] = 1;
+        int mod = 1e9 + 7;
+        
+        // Priority Queue: {distance, node}
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+        pq.push({0, 0});
+        
+        while (!pq.empty()) {
+            auto [d, u] = pq.top();
+            pq.pop();
+            
+            if (d > dist[u]) continue; // Stale node
+            
+            for (auto& edge : adj[u]) {
+                int v = edge.first;
+                long long w = edge.second;
+                
+                if (d + w < dist[v]) {
+                    dist[v] = d + w;
+                    ways[v] = ways[u];
+                    pq.push({dist[v], v});
+                } else if (d + w == dist[v]) {
+                    ways[v] = (ways[v] + ways[u]) % mod;
+                }
+            }
+        }
+        return ways[n - 1];
+    }
+};
 ```
 - **Complexity:** T: O(E log V) | S: O(V + E)
 
+---
+
 ### Q304) Binary Tree Cameras
-- **Problem:** Min cameras to monitor all nodes.
-- **Algo:** Postorder states: 0=Needs cover, 1=Has camera, 2=Covered.
+- **Problem:** Minimum cameras to monitor all nodes (a camera covers itself, parent, and children).
+- **Concept / Optimal Algo:** Post-order DFS State DP.  
+  States: `0 = Needs Cover`, `1 = Has Camera`, `2 = Covered (but no camera)`.
 - **C++ Code:**
+
+**Recursive Tree DP (Optimal):**
 ```cpp
 class Solution {
     int cams = 0;
+    
+    // 0: needs cover, 1: has camera, 2: is covered
     int dfs(TreeNode* root) {
-        if(!root) return 2;
-        int l = dfs(root->left), r = dfs(root->right);
-        if(l==0 || r==0) { cams++; return 1; }
-        return (l==1 || r==1) ? 2 : 0;
+        if (!root) return 2; // Null nodes are inherently "covered"
+        
+        int left = dfs(root->left);
+        int right = dfs(root->right);
+        
+        // If any child needs cover, parent MUST have a camera
+        if (left == 0 || right == 0) {
+            cams++;
+            return 1;
+        }
+        
+        // If any child has a camera, parent is covered
+        if (left == 1 || right == 1) {
+            return 2;
+        }
+        
+        // Otherwise, both children are covered, but parent needs cover from above
+        return 0;
     }
-public: int minCameraCover(TreeNode* root) { if(dfs(root) == 0) cams++; return cams; }
+public:
+    int minCameraCover(TreeNode* root) {
+        // If root itself needs cover after DFS, add one more camera
+        if (dfs(root) == 0) cams++;
+        return cams;
+    }
 };
 ```
 - **Complexity:** T: O(N) | S: O(H)
 
+---
+
 ### Q305) Sum of Distances in Tree
-- **Problem:** Sum of path distances to all nodes for every node.
-- **Algo:** Two passes. Pass 1: find sizes of subtrees and ans for root. Pass 2: shift root `ans[child] = ans[parent] - count[child] + (N - count[child])`.
+- **Problem:** Find sum of path distances to all nodes for every node.
+- **Concept / Optimal Algo:** Two passes DFS.  
+  1. Bottom-up: find sizes of subtrees and ans for root (0).  
+  2. Top-down: Shift the root. Moving from parent to child: `ans[child] = ans[parent] - count[child] + (N - count[child])`.
 - **C++ Code:**
+
+**Tree Re-rooting DP:**
 ```cpp
 class Solution {
-    vector<unordered_set<int>> adj; vector<int> res, count; int N;
+    vector<unordered_set<int>> adj;
+    vector<int> res;
+    vector<int> count;
+    int N;
+    
     void dfs(int root, int pre) {
-        for(int i: adj[root]) if(i != pre) { dfs(i, root); count[root] += count[i]; res[root] += res[i] + count[i]; }
+        for (int i : adj[root]) {
+            if (i != pre) {
+                dfs(i, root);
+                count[root] += count[i];
+                res[root] += res[i] + count[i];
+            }
+        }
     }
+    
     void dfs2(int root, int pre) {
-        for(int i: adj[root]) if(i != pre) { res[i] = res[root] - count[i] + N - count[i]; dfs2(i, root); }
+        for (int i : adj[root]) {
+            if (i != pre) {
+                // Formula: moving closer to subtree i saves distance for count[i] nodes,
+                // but adds distance for all other (N - count[i]) nodes.
+                res[i] = res[root] - count[i] + N - count[i];
+                dfs2(i, root);
+            }
+        }
     }
-public: vector<int> sumOfDistancesInTree(int n, vector<vector<int>>& edges) {
-    N=n; adj.resize(n); res.assign(n,0); count.assign(n,1);
-    for(auto& e:edges) { adj[e[0]].insert(e[1]); adj[e[1]].insert(e[0]); }
-    dfs(0, -1); dfs2(0, -1); return res;
-}};
+public:
+    vector<int> sumOfDistancesInTree(int n, vector<vector<int>>& edges) {
+        N = n;
+        adj.resize(n);
+        res.assign(n, 0);
+        count.assign(n, 1); // Every subtree has at least 1 node (itself)
+        
+        for (auto& e : edges) {
+            adj[e[0]].insert(e[1]);
+            adj[e[1]].insert(e[0]);
+        }
+        
+        dfs(0, -1);
+        dfs2(0, -1);
+        
+        return res;
+    }
+};
 ```
 - **Complexity:** T: O(N) | S: O(N)
+
+---
 
 ### Bitmask DP
 
 ### Q306) Minimum Number of Work Sessions to Finish the Tasks
-- **Problem:** Min sessions (max time `T`) to finish all tasks.
-- **Algo:** DP with Bitmask. `dp[mask]` stores min sessions needed.
+- **Problem:** Find the min sessions (max time `T`) to finish all tasks.
+- **Concept / Optimal Algo:** State is a bitmask of finished tasks. Iterate over submasks.
 - **C++ Code:**
+
+**Tabulation (Bitmask DP):**
 ```cpp
-class Solution { public: int minSessions(vector<int>& tasks, int s) {
-    int n = tasks.size(); vector<int> dp(1<<n, 1e9); vector<int> sum(1<<n, 0);
-    for(int i=1; i<(1<<n); i++) {
-        for(int j=0; j<n; j++) if(i & (1<<j)) sum[i] += tasks[j];
-        if(sum[i] <= s) dp[i] = 1;
+class Solution {
+public:
+    int minSessions(vector<int>& tasks, int sessionTime) {
+        int n = tasks.size();
+        int maxMask = 1 << n;
+        vector<int> dp(maxMask, 1e9);
+        vector<int> sum(maxMask, 0);
+        
+        // Precompute sum for all submasks and mark single session masks
+        for (int mask = 1; mask < maxMask; mask++) {
+            for (int j = 0; j < n; j++) {
+                if (mask & (1 << j)) {
+                    sum[mask] += tasks[j];
+                }
+            }
+            if (sum[mask] <= sessionTime) {
+                dp[mask] = 1;
+            }
+        }
+        
+        // DP: For each mask, iterate over its submasks
+        for (int mask = 1; mask < maxMask; mask++) {
+            // Traverse all submasks of 'mask'
+            for (int submask = mask; submask > 0; submask = (submask - 1) & mask) {
+                dp[mask] = min(dp[mask], dp[submask] + dp[mask ^ submask]);
+            }
+        }
+        return dp.back();
     }
-    for(int i=1; i<(1<<n); i++) for(int j=i; j>0; j=(j-1)&i) dp[i] = min(dp[i], dp[j] + dp[i^j]);
-    return dp.back();
-}};
+};
 ```
 - **Complexity:** T: O(3^N) | S: O(2^N)
 
+---
+
 ### Q307) Fair Distribution of Cookies
-- **Problem:** Min possible maximum cookies a child gets.
-- **Algo:** Backtracking / Bitmask DP. (Backtracking is much simpler to write compactly).
+- **Problem:** Distribute cookies to kids to minimize the maximum amount a single child gets.
+- **Concept / Optimal Algo:** While DP Bitmask works, pure recursive backtracking is much cleaner and faster due to strict pruning and small constraints (`k <= 8`).
 - **C++ Code:**
+
+**Backtracking (DFS):**
 ```cpp
 class Solution {
     int ans = INT_MAX;
-    void dfs(vector<int>& C, vector<int>& sums, int k, int idx) {
-        if(idx == C.size()) { int mx=0; for(int x:sums) mx=max(mx, x); ans=min(ans, mx); return; }
-        for(int i=0; i<k; i++) { sums[i]+=C[idx]; dfs(C,sums,k,idx+1); sums[i]-=C[idx]; if(sums[i]==0) break; }
+    
+    void dfs(vector<int>& cookies, vector<int>& sums, int k, int idx) {
+        if (idx == cookies.size()) {
+            int mx = 0;
+            for (int x : sums) mx = max(mx, x);
+            ans = min(ans, mx);
+            return;
+        }
+        
+        for (int i = 0; i < k; i++) {
+            // Pruning: if current sum + cookie > current global min, skip
+            if (sums[i] + cookies[idx] >= ans) continue; 
+            
+            sums[i] += cookies[idx];
+            dfs(cookies, sums, k, idx + 1);
+            sums[i] -= cookies[idx];
+            
+            // Optimization: first child starting a completely new bucket is symmetric
+            if (sums[i] == 0) break;
+        }
     }
-public: int distributeCookies(vector<int>& cookies, int k) {
-    vector<int> sums(k, 0); dfs(cookies, sums, k, 0); return ans;
-}};
+public:
+    int distributeCookies(vector<int>& cookies, int k) {
+        vector<int> sums(k, 0);
+        // Optimization: Distribute largest cookies first
+        sort(cookies.rbegin(), cookies.rend());
+        dfs(cookies, sums, k, 0);
+        return ans;
+    }
+};
 ```
 - **Complexity:** T: O(K^N) | S: O(K)
 
+---
+
 ### Q308) Shortest Path Visiting All Nodes
-- **Problem:** Min edges to visit every node at least once.
-- **Algo:** BFS with State `(Node, VisitedMask)`. Target is `(1<<N) - 1`.
+- **Problem:** Return the min number of edges to visit every node at least once. Re-visiting is allowed.
+- **Concept / Optimal Algo:** Shortest Path -> BFS. Track state as `(CurrentNode, VisitedMask)`. Target is `(1<<N) - 1`.
 - **C++ Code:**
+
+**BFS + Bitmask DP:**
 ```cpp
-class Solution { public: int shortestPathLength(vector<vector<int>>& graph) {
-    int n = graph.size(), target = (1<<n)-1; queue<vector<int>> q; vector<vector<bool>> vis(n, vector<bool>(1<<n, false));
-    for(int i=0; i<n; i++) { q.push({i, 1<<i, 0}); vis[i][1<<i] = true; }
-    while(!q.empty()) {
-        auto curr = q.front(); q.pop(); int u = curr[0], mask = curr[1], dist = curr[2];
-        if(mask == target) return dist;
-        for(int v : graph[u]) { int nm = mask | (1<<v); if(!vis[v][nm]) { vis[v][nm]=true; q.push({v, nm, dist+1}); } }
-    } return 0;
-}};
+class Solution {
+public:
+    int shortestPathLength(vector<vector<int>>& graph) {
+        int n = graph.size();
+        if (n == 1) return 0;
+        
+        int targetMask = (1 << n) - 1;
+        // Queue stores: {current_node, visited_mask, distance_taken}
+        queue<vector<int>> q;
+        // Visited grid to prevent loops: [node][mask]
+        vector<vector<bool>> vis(n, vector<bool>(1 << n, false));
+        
+        // Multi-source BFS: we can start from any node
+        for (int i = 0; i < n; i++) {
+            q.push({i, 1 << i, 0});
+            vis[i][1 << i] = true;
+        }
+        
+        while (!q.empty()) {
+            auto curr = q.front();
+            q.pop();
+            
+            int u = curr[0];
+            int mask = curr[1];
+            int dist = curr[2];
+            
+            if (mask == targetMask) return dist;
+            
+            for (int v : graph[u]) {
+                int nextMask = mask | (1 << v);
+                if (!vis[v][nextMask]) {
+                    vis[v][nextMask] = true;
+                    q.push({v, nextMask, dist + 1});
+                }
+            }
+        }
+        return 0;
+    }
+};
 ```
 - **Complexity:** T: O(N * 2^N) | S: O(N * 2^N)
+
+---
 
 ### Digit DP
 
 ### Q309) Count Numbers with Unique Digits
-- **Problem:** Count integers `0 <= x < 10^n` with unique digits.
-- **Algo:** Combinatorics. `n=1`: 10. `n=2`: 9 * 9. `n=3`: 9 * 9 * 8. Sum them up.
+- **Problem:** Count integers `0 <= x < 10^n` with all unique digits.
+- **Concept / Optimal Algo:** Math Combinatorics.
+  - `n=1`: 10 numbers (0-9).
+  - `n=2`: 9 choices for 1st digit (1-9), 9 choices for 2nd (0-9 minus 1st). Total 9 * 9 = 81.
+  - `n=3`: 9 * 9 * 8.
 - **C++ Code:**
+
+**Math (O(1) Space DP):**
 ```cpp
-class Solution { public: int countNumbersWithUniqueDigits(int n) {
-    if(n==0) return 1; int res = 10, avail = 9, curr = 9;
-    for(int i=2; i<=n && avail>0; i++) { curr *= avail--; res += curr; } return res;
-}};
+class Solution {
+public:
+    int countNumbersWithUniqueDigits(int n) {
+        if (n == 0) return 1;
+        
+        int res = 10; // n = 1 -> {0, 1, 2, ..., 9}
+        int availableNumbers = 9;
+        int currentPermutations = 9;
+        
+        for (int i = 2; i <= n && availableNumbers > 0; i++) {
+            currentPermutations *= availableNumbers;
+            res += currentPermutations;
+            availableNumbers--;
+        }
+        
+        return res;
+    }
+};
 ```
 - **Complexity:** T: O(N) | S: O(1)
 
+---
+
 ### Q310) Number of Digit One
-- **Problem:** Count total '1's appearing in all digits <= n.
-- **Algo:** Math. Count occurrences of 1 at each digit position (ones, tens, hundreds...).
+- **Problem:** Count occurrences of the digit '1' in all integers `<= n`.
+- **Concept / Optimal Algo:** Math. Count 1s digit by digit (ones place, tens place, hundreds place...). The formula splits the number around the current power of 10.
 - **C++ Code:**
+
+**Math:**
 ```cpp
-class Solution { public: int countDigitOne(int n) {
-    long long res = 0; for(long long m=1; m<=n; m*=10) {
-        long long a = n/m, b = n%m; res += (a+8)/10 * m + (a%10 == 1 ? b+1 : 0);
-    } return res;
-}};
+class Solution {
+public:
+    int countDigitOne(int n) {
+        long long res = 0;
+        
+        for (long long m = 1; m <= n; m *= 10) {
+            long long a = n / m; // Higher digits
+            long long b = n % m; // Lower digits
+            
+            // Full blocks of length `m`
+            res += (a + 8) / 10 * m;
+            
+            // Remainder block
+            if (a % 10 == 1) {
+                res += b + 1;
+            }
+        }
+        return res;
+    }
+};
 ```
 - **Complexity:** T: O(log N) | S: O(1)
 
+---
+
 ### Q311) Numbers At Most N Given Digit Set
-- **Problem:** Count numbers <= N formed by given digit strings.
-- **Algo:** DP by comparing string length and lexicographical order of digits.
+- **Problem:** Count numbers `<= N` formed using only a given set of digit strings.
+- **Concept / Optimal Algo:** 
+  1. Add all numbers with fewer digits than `N` (`digits^len`).
+  2. For the same length as `N`, compare from left to right. If a digit is less than `N`'s digit, add all combos for remaining positions. If equal, proceed to next position.
 - **C++ Code:**
+
+**Math / String Compare:**
 ```cpp
-class Solution { public: int atMostNGivenDigitSet(vector<string>& D, int n) {
-    string S = to_string(n); int K = S.size(), res = 0, sz = D.size();
-    for(int i=1; i<K; i++) res += pow(sz, i);
-    for(int i=0; i<K; i++) {
-        bool hasSame = false;
-        for(string d : D) {
-            if(d[0] < S[i]) res += pow(sz, K - i - 1);
-            else if(d[0] == S[i]) hasSame = true;
+class Solution {
+public:
+    int atMostNGivenDigitSet(vector<string>& D, int n) {
+        string S = to_string(n);
+        int K = S.size();
+        int res = 0;
+        int sz = D.size();
+        
+        // 1. Valid numbers with length < K
+        for (int i = 1; i < K; i++) {
+            res += pow(sz, i);
         }
-        if(!hasSame) return res;
-    } return res + 1;
-}};
+        
+        // 2. Valid numbers with length == K
+        for (int i = 0; i < K; i++) {
+            bool hasSameDigit = false;
+            
+            for (string& d : D) {
+                if (d[0] < S[i]) {
+                    // Digit strictly smaller, all combinations of remaining digits are valid
+                    res += pow(sz, K - i - 1);
+                } else if (d[0] == S[i]) {
+                    // Digit matches, need to check next digit of N
+                    hasSameDigit = true;
+                }
+            }
+            
+            // If there's no matching digit for S[i], we can't form exactly N's prefix anymore
+            if (!hasSameDigit) return res;
+        }
+        
+        // If we survived the loop, the number `N` itself is valid.
+        return res + 1;
+    }
+};
 ```
 - **Complexity:** T: O(log N) | S: O(log N)
+
+---
 
 ### Probability DP
 
 ### Q312) Knight Probability in Chessboard
-- **Problem:** Probability knight stays on board after `k` moves.
-- **Algo:** 3D DP / 2D toggling DP accumulating probabilities of 8 possible moves.
+- **Problem:** Find probability that a knight stays on an `N x N` board after `k` moves.
+- **Concept / Optimal Algo:** Toggle 2D grids (Current state -> Next state) mapping out probabilities. Accumulate probabilities of jumping to `(r, c)` from 8 directions and divide by 8.
 - **C++ Code:**
+
+**Tabulation (Space Optimized 2D Grid Toggle):**
 ```cpp
-class Solution { public: double knightProbability(int n, int k, int r, int c) {
-    vector<vector<double>> dp(n, vector<double>(n, 0)); dp[r][c] = 1.0;
-    int dirs[8][2] = {{-2,1},{-1,2},{1,2},{2,1},{2,-1},{1,-2},{-1,-2},{-2,-1}};
-    while(k--) {
-        vector<vector<double>> next(n, vector<double>(n, 0));
-        for(int i=0; i<n; i++) for(int j=0; j<n; j++) if(dp[i][j]) {
-            for(auto d:dirs) { int x=i+d[0], y=j+d[1]; if(x>=0&&x<n&&y>=0&&y<n) next[x][y] += dp[i][j]/8.0; }
-        } dp = next;
-    } double sum = 0; for(auto row:dp) for(double x:row) sum += x; return sum;
-}};
+class Solution {
+public:
+    double knightProbability(int n, int k, int r, int c) {
+        vector<vector<double>> dp(n, vector<double>(n, 0.0));
+        dp[r][c] = 1.0;
+        
+        int dirs[8][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, 
+                          {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};
+        
+        while (k--) {
+            vector<vector<double>> next_dp(n, vector<double>(n, 0.0));
+            
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (dp[i][j] > 0) {
+                        for (auto& d : dirs) {
+                            int x = i + d[0];
+                            int y = j + d[1];
+                            if (x >= 0 && x < n && y >= 0 && y < n) {
+                                next_dp[x][y] += dp[i][j] / 8.0;
+                            }
+                        }
+                    }
+                }
+            }
+            dp = next_dp;
+        }
+        
+        double sum = 0.0;
+        for (auto& row : dp) {
+            for (double val : row) {
+                sum += val;
+            }
+        }
+        return sum;
+    }
+};
 ```
 - **Complexity:** T: O(K * N^2) | S: O(N^2)
 
+---
+
 ### Q313) Soup Servings
-- **Problem:** Prob A empties first + 0.5 * Prob both empty.
-- **Algo:** Divide by 25. Large N converges to 1. Memoized 2D DP.
+- **Problem:** Probability Soup A empties first + half prob that both empty simultaneously.
+- **Concept / Optimal Algo:** Operations remove 4 portions total. Divide `N` by 25 to reduce state space. For `N >= 4800`, probability naturally converges to `1.0`.
 - **C++ Code:**
+
+**Memoization (Top-Down):**
 ```cpp
 class Solution {
-    double dp[200][200];
+    double dp[200][200]; // 4800 / 25 = 192 max size needed
+    
     double solve(int a, int b) {
-        if(a<=0 && b<=0) return 0.5; if(a<=0) return 1.0; if(b<=0) return 0.0;
-        if(dp[a][b] > 0) return dp[a][b];
-        return dp[a][b] = 0.25*(solve(a-4,b)+solve(a-3,b-1)+solve(a-2,b-2)+solve(a-1,b-3));
+        if (a <= 0 && b <= 0) return 0.5; // Both empty
+        if (a <= 0) return 1.0;           // A empties first
+        if (b <= 0) return 0.0;           // B empties first
+        
+        if (dp[a][b] > 0) return dp[a][b];
+        
+        double prob = 0.25 * (
+            solve(a - 4, b) +     // Op 1: 100ml A, 0ml B
+            solve(a - 3, b - 1) + // Op 2: 75ml A, 25ml B
+            solve(a - 2, b - 2) + // Op 3: 50ml A, 50ml B
+            solve(a - 1, b - 3)   // Op 4: 25ml A, 75ml B
+        );
+        
+        return dp[a][b] = prob;
     }
-public: double soupServings(int n) { if(n >= 4800) return 1.0; return solve((n+24)/25, (n+24)/25); }
+public:
+    double soupServings(int n) {
+        // Law of large numbers: A is consumed faster on average.
+        if (n >= 4800) return 1.0; 
+        
+        // Ceiling division by 25
+        int m = (n + 24) / 25; 
+        return solve(m, m);
+    }
 };
 ```
-- **Complexity:** T: O(1) bounded | S: O(1) bounded
+- **Complexity:** T: O(1) bounded (Max `192 x 192`) | S: O(1) bounded
+
+---
 
 ### Q314) New 21 Game
-- **Problem:** Stop drawing at `k` points. Prob sum <= `n`.
-- **Algo:** Sliding Window DP. `dp[i]` is prob of reaching `i`.
+- **Problem:** Probability sum of points `<= n` when you stop drawing after reaching `>= k`.
+- **Concept / Optimal Algo:** Sliding Window DP. `dp[i]` is prob of reaching exact score `i`. At `i`, prob is `sum(dp[i-maxPts] ... dp[i-1]) / maxPts`.
 - **C++ Code:**
+
+**Tabulation (Sliding Window):**
 ```cpp
-class Solution { public: double new21Game(int n, int k, int maxPts) {
-    if(k==0 || n >= k + maxPts) return 1.0;
-    vector<double> dp(n+1, 0); dp[0] = 1.0; double wSum = 1.0, res = 0.0;
-    for(int i=1; i<=n; i++) {
-        dp[i] = wSum / maxPts;
-        if(i < k) wSum += dp[i]; else res += dp[i];
-        if(i >= maxPts) wSum -= dp[i - maxPts];
-    } return res;
-}};
+class Solution {
+public:
+    double new21Game(int n, int k, int maxPts) {
+        if (k == 0 || n >= k + maxPts) return 1.0;
+        
+        vector<double> dp(n + 1, 0.0);
+        dp[0] = 1.0;
+        
+        double windowSum = 1.0;
+        double res = 0.0;
+        
+        for (int i = 1; i <= n; i++) {
+            // Calculate current probability based on previous maxPts probabilities
+            dp[i] = windowSum / maxPts;
+            
+            // If we are under K, this state contributes to future draws
+            if (i < k) {
+                windowSum += dp[i];
+            } else {
+                // Once we pass K, we stop drawing, so accumulate to result
+                res += dp[i];
+            }
+            
+            // Slide window: remove the state that falls out of range maxPts
+            if (i >= maxPts) {
+                windowSum -= dp[i - maxPts];
+            }
+        }
+        return res;
+    }
+};
 ```
 - **Complexity:** T: O(N) | S: O(N)
+
+---
 
 ### State Machine DP
 
 ### Q315) Best Time to Buy and Sell Stock with Cooldown
-- **Problem:** Can't buy on the day after selling.
-- **Algo:** State tracking: Hold, Sold, Rest.
+- **Problem:** Max profit given a 1-day cooldown after selling before you can buy again.
+- **Concept / Optimal Algo:** State tracking. 3 States: `Hold` (have stock), `Sold` (just sold, now on cooldown), `Rest` (cooldown finished, ready to buy).
 - **C++ Code:**
-```cpp
-class Solution { public: int maxProfit(vector<int>& prices) {
-    int hold = INT_MIN, sold = 0, rest = 0;
-    for(int p : prices) { int prevSold = sold; sold = hold + p; hold = max(hold, rest - p); rest = max(rest, prevSold); }
-    return max(sold, rest);
-}};
-```
-- **Complexity:** T: O(N) | S: O(1)
 
-### Q316) Best Time to Buy and Sell Stock III
-- **Problem:** At most 2 transactions.
-- **Algo:** 4 states: `buy1`, `sell1`, `buy2`, `sell2`.
-- **C++ Code:**
+**Tabulation (Space Optimized O(1) State Machine):**
 ```cpp
-class Solution { public: int maxProfit(vector<int>& prices) {
-    int b1 = INT_MIN, s1 = 0, b2 = INT_MIN, s2 = 0;
-    for(int p : prices) { b1 = max(b1, -p); s1 = max(s1, b1 + p); b2 = max(b2, s1 - p); s2 = max(s2, b2 + p); }
-    return s2;
-}};
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int hold = INT_MIN; // Max profit if currently holding a stock
+        int sold = 0;       // Max profit if just sold a stock
+        int rest = 0;       // Max profit if doing nothing/ready to buy
+        
+        for (int p : prices) {
+            int prevSold = sold;
+            // Sell the stock we were holding
+            sold = hold + p;
+            // Either keep holding, or buy a new stock from rest state
+            hold = max(hold, rest - p);
+            // Rest continues, or cooldown over
+            rest = max(rest, prevSold);
+        }
+        
+        return max(sold, rest);
+    }
+};
 ```
 - **Complexity:** T: O(N) | S: O(1)
 
 ---
 
-## 📐 Maths / Geometry — **6 Questions**
+### Q316) Best Time to Buy and Sell Stock III
+- **Problem:** Max profit with at most 2 transactions.
+- **Concept / Optimal Algo:** 4 states sequential DP: First Buy (`b1`), First Sell (`s1`), Second Buy (`b2`), Second Sell (`s2`).
+- **C++ Code:**
+
+**Tabulation (Space Optimized O(1) State Machine):**
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int b1 = INT_MIN; // Money left after 1st buy
+        int s1 = 0;       // Profit after 1st sell
+        int b2 = INT_MIN; // Money left after 2nd buy (Profit1 - Cost)
+        int s2 = 0;       // Final Profit after 2nd sell
+        
+        for (int p : prices) {
+            b1 = max(b1, -p);        // Spend p to buy
+            s1 = max(s1, b1 + p);    // Sell 1st stock at p
+            b2 = max(b2, s1 - p);    // Re-invest profit to buy 2nd stock at p
+            s2 = max(s2, b2 + p);    // Sell 2nd stock at p
+        }
+        
+        return s2; // Max possible profit ends here
+    }
+};
+```
+- **Complexity:** T: O(N) | S: O(1)
+
+---
+
+## 📐 Maths / Geometry
 
 ### Q317) Palindrome Number
-- **Algo:** Reverse half the number. Avoid overflow.
-- **C++ Code:**
-```cpp
-class Solution { public: bool isPalindrome(int x) {
-    if(x < 0 || (x % 10 == 0 && x != 0)) return false;
-    int rev = 0; while(x > rev) { rev = rev * 10 + x % 10; x /= 10; }
-    return x == rev || x == rev / 10;
-}};
-```
-- **Complexity:** T: O(log X) | S: O(1)
-
-### Q318) Reverse Integer
-- **Algo:** Modulo logic, bound check using `INT_MAX/10`.
-- **C++ Code:**
-```cpp
-class Solution { public: int reverse(int x) {
-    int res = 0; while(x) {
-        if(res > INT_MAX/10 || res < INT_MIN/10) return 0;
-        res = res * 10 + x % 10; x /= 10;
-    } return res;
-}};
-```
-
-### Q319) Factorial Trailing Zeroes
-- **Algo:** Number of trailing zeroes is dictated by number of 5s. Keep dividing `n/5`.
-- **C++ Code:**
-```cpp
-class Solution { public: int trailingZeroes(int n) { int res=0; while(n){ res+=n/5; n/=5; } return res; } };
-```
-
-### Q320) Valid Square
-- **Algo:** Sort distances between all 4 points. Must have 4 equal sides and 2 equal diagonals.
+- **Problem:** Check if integer is a palindrome without string conversion.
+- **Concept / Optimal Algo:** Reverse half the number. If `x < 0` or ends in 0 (but isn't 0), it's false. Keep popping from `x` into `rev` until `x <= rev`.
 - **C++ Code:**
 ```cpp
 class Solution {
-    int d(vector<int>& p1, vector<int>& p2) { return (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1]); }
-public: bool validSquare(vector<int>& p1, vector<int>& p2, vector<int>& p3, vector<int>& p4) {
-    vector<int> dists = {d(p1,p2), d(p1,p3), d(p1,p4), d(p2,p3), d(p2,p4), d(p3,p4)};
-    sort(dists.begin(), dists.end());
-    return dists[0] > 0 && dists[0]==dists[1] && dists[1]==dists[2] && dists[2]==dists[3] && dists[4]==dists[5];
-}};
+public:
+    bool isPalindrome(int x) {
+        // Negatives, or numbers ending in 0 (except 0 itself) are not palindromes
+        if (x < 0 || (x % 10 == 0 && x != 0)) {
+            return false;
+        }
+        
+        int rev = 0;
+        // Rebuild half the number
+        while (x > rev) {
+            rev = rev * 10 + (x % 10);
+            x /= 10;
+        }
+        
+        // Even length match || Odd length match (discard middle digit)
+        return x == rev || x == rev / 10;
+    }
+};
 ```
-
-### Q321) Minimum Area Rectangle II
-- **Problem:** Rectangles not necessarily aligned with X-Y axes.
-- **Algo:** Center point + Diagonal length mapping. If two pairs form same center and length, they form a rectangle. Compute area and minimize.
-- **C++ Code:** *(Summarized logic due to space constraints: O(N^2) center map build, check pairs).*
-```cpp
-class Solution { public: double minAreaFreeRect(vector<vector<int>>& points) {
-    unordered_map<string, vector<pair<int, int>>> mp; double minA = DBL_MAX; int n = points.size();
-    for(int i=0; i<n; i++) for(int j=i+1; j<n; j++) {
-        long d = pow(points[i][0]-points[j][0],2) + pow(points[i][1]-points[j][1],2);
-        double cx = (points[i][0]+points[j][0])/2.0, cy = (points[i][1]+points[j][1])/2.0;
-        string key = to_string(d) + "_" + to_string(cx) + "_" + to_string(cy);
-        for(auto& p : mp[key]) minA = min(minA, sqrt(pow(points[i][0]-points[p.first][0],2)+pow(points[i][1]-points[p.first][1],2)) * sqrt(pow(points[i][0]-points[p.second][0],2)+pow(points[i][1]-points[p.second][1],2)));
-        mp[key].push_back({i, j});
-    } return minA == DBL_MAX ? 0 : minA;
-}};
-```
-- **Complexity:** T: O(N^2) | S: O(N^2)
-
-### Q322) Max Points on a Line
-- **Problem:** Max points sharing a single straight line.
-- **Algo:** For each point, calculate reduced `dy/dx` using GCD with all other points, store in map. Maximize.
-- **C++ Code:**
-```cpp
-class Solution { public: int maxPoints(vector<vector<int>>& pt) {
-    int res = 1, n = pt.size();
-    for(int i=0; i<n; i++) {
-        unordered_map<string, int> m; int mx = 0;
-        for(int j=i+1; j<n; j++) {
-            int dx = pt[j][0]-pt[i][0], dy = pt[j][1]-pt[i][1], g = gcd(dx, dy);
-            mx = max(mx, ++m[to_string(dx/g) + "_" + to_string(dy/g)]);
-        } res = max(res, mx + 1);
-    } return res;
-}};
-```
+- **Complexity:** T: O(log X) | S: O(1)
 
 ---
 
-## 🧠 Advanced Topics — **9 Questions**
+### Q318) Reverse Integer
+- **Problem:** Reverse integer digits, return 0 on 32-bit overflow.
+- **Concept / Optimal Algo:** Extract digits with `% 10`, check bounds `INT_MAX/10` and `INT_MIN/10` before multiplying.
+- **C++ Code:**
+```cpp
+class Solution {
+public:
+    int reverse(int x) {
+        int res = 0;
+        
+        while (x != 0) {
+            int pop = x % 10;
+            x /= 10;
+            
+            // Overflow checks before `res * 10`
+            if (res > INT_MAX / 10 || (res == INT_MAX / 10 && pop > 7)) return 0;
+            if (res < INT_MIN / 10 || (res == INT_MIN / 10 && pop < -8)) return 0;
+            
+            res = res * 10 + pop;
+        }
+        return res;
+    }
+};
+```
+- **Complexity:** T: O(log X) | S: O(1)
+
+---
+
+### Q319) Factorial Trailing Zeroes
+- **Problem:** Find the number of trailing zeroes in `n!`.
+- **Concept / Optimal Algo:** Trailing zeroes are created by `10 = 2 * 5`. In factorials, 5s are the bottleneck. Count how many times 5 divides into `n` (`n/5 + n/25 + n/125 ...`).
+- **C++ Code:**
+```cpp
+class Solution {
+public:
+    int trailingZeroes(int n) {
+        int res = 0;
+        while (n > 0) {
+            res += n / 5;
+            n /= 5;
+        }
+        return res;
+    }
+};
+```
+- **Complexity:** T: O(log_5 N) | S: O(1)
+
+---
+
+### Q320) Valid Square
+- **Problem:** Given 4 points, determine if they form a valid square.
+- **Concept / Optimal Algo:** Calculate the squared distance between all pairs of points (6 distances). For a square, there must be 4 equal shorter distances (sides) and 2 equal longer distances (diagonals). Sort and verify.
+- **C++ Code:**
+```cpp
+class Solution {
+    int getDist(vector<int>& p1, vector<int>& p2) {
+        return (p1[0] - p2[0]) * (p1[0] - p2[0]) + 
+               (p1[1] - p2[1]) * (p1[1] - p2[1]);
+    }
+public:
+    bool validSquare(vector<int>& p1, vector<int>& p2, vector<int>& p3, vector<int>& p4) {
+        vector<int> dists = {
+            getDist(p1, p2), getDist(p1, p3), getDist(p1, p4),
+            getDist(p2, p3), getDist(p2, p4), getDist(p3, p4)
+        };
+        
+        sort(dists.begin(), dists.end());
+        
+        // 4 equal sides (> 0) AND 2 equal diagonals
+        return dists[0] > 0 && 
+               dists[0] == dists[1] && dists[1] == dists[2] && dists[2] == dists[3] && 
+               dists[4] == dists[5];
+    }
+};
+```
+- **Complexity:** T: O(1) | S: O(1)
+
+---
+
+### Q321) Minimum Area Rectangle II
+- **Problem:** Find the minimum area of a rectangle formed by points, not necessarily parallel to the X and Y axes.
+- **Concept / Optimal Algo:** A rectangle's diagonals intersect at exactly their midpoints and are equal in length. Map `Key: "Center_X, Center_Y, Diagonal_Length" -> Value: list of point pairs`. Any two pairs in the same key form a rectangle. Compute area and minimize.
+- **C++ Code:**
+```cpp
+class Solution {
+public:
+    double minAreaFreeRect(vector<vector<int>>& points) {
+        unordered_map<string, vector<pair<int, int>>> mp;
+        double minA = DBL_MAX;
+        int n = points.size();
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                // Diagonal length squared
+                long distSq = pow(points[i][0] - points[j][0], 2) + 
+                              pow(points[i][1] - points[j][1], 2);
+                
+                // Center point coordinates
+                double cx = (points[i][0] + points[j][0]) / 2.0;
+                double cy = (points[i][1] + points[j][1]) / 2.0;
+                
+                string key = to_string(distSq) + "_" + to_string(cx) + "_" + to_string(cy);
+                
+                // Compare with all previous pairs that have same diagonal length & center
+                for (auto& p : mp[key]) {
+                    double area = sqrt(pow(points[i][0] - points[p.first][0], 2) + 
+                                       pow(points[i][1] - points[p.first][1], 2)) * 
+                                  sqrt(pow(points[i][0] - points[p.second][0], 2) + 
+                                       pow(points[i][1] - points[p.second][1], 2));
+                    minA = min(minA, area);
+                }
+                
+                mp[key].push_back({i, j});
+            }
+        }
+        
+        return minA == DBL_MAX ? 0 : minA;
+    }
+};
+```
+- **Complexity:** T: O(N^2) (assuming few collinear points on same circle) | S: O(N^2)
+
+---
+
+### Q322) Max Points on a Line
+- **Problem:** Return the max points that lie on the same straight line.
+- **Concept / Optimal Algo:** For a fixed point `i`, compute the normalized slope to all other points `j` using `dy/dx` simplified via their Greatest Common Divisor (GCD). Store slopes in a hashmap to count collinear points.
+- **C++ Code:**
+```cpp
+class Solution {
+public:
+    int maxPoints(vector<vector<int>>& pt) {
+        int n = pt.size();
+        if (n <= 2) return n;
+        
+        int res = 1;
+        for (int i = 0; i < n; i++) {
+            unordered_map<string, int> slopeMap;
+            int maxForI = 0;
+            
+            for (int j = i + 1; j < n; j++) {
+                int dx = pt[j][0] - pt[i][0];
+                int dy = pt[j][1] - pt[i][1];
+                
+                // Normalize slope using GCD to avoid float precision issues
+                int g = gcd(dx, dy);
+                string key = to_string(dx / g) + "_" + to_string(dy / g);
+                
+                slopeMap[key]++;
+                maxForI = max(maxForI, slopeMap[key]);
+            }
+            // Add 1 for the point `i` itself
+            res = max(res, maxForI + 1);
+        }
+        return res;
+    }
+};
+```
+- **Complexity:** T: O(N^2 log(coord)) | S: O(N)
+
+---
+
+## 🧠 Advanced Topics
 
 ### String Matching
 
 ### Q323) Repeated String Match
-- **Algo:** Append `a` until `len(a) >= len(b)`. Check if `b` is found. Append one more `a`, check again. Else return -1.
+- **Problem:** Minimum times you must repeat `a` so that `b` is a substring of it.
+- **Concept / Optimal Algo:** Append `a` until its length is `>=` `b.length()`. Check if `b` is found. If not, append `a` one last time (to account for boundary alignment wraps). Check again.
 - **C++ Code:**
 ```cpp
-class Solution { public: int repeatedStringMatch(string a, string b) {
-    string s = a; int count = 1; while(s.size() < b.size()) { s += a; count++; }
-    if(s.find(b) != string::npos) return count;
-    s += a; if(s.find(b) != string::npos) return count + 1; return -1;
-}};
+class Solution {
+public:
+    int repeatedStringMatch(string a, string b) {
+        string s = a;
+        int count = 1;
+        
+        // Build base string until it matches size requirement
+        while (s.size() < b.size()) {
+            s += a;
+            count++;
+        }
+        
+        // First check
+        if (s.find(b) != string::npos) return count;
+        
+        // Append one more time for shifted alignments
+        s += a;
+        if (s.find(b) != string::npos) return count + 1;
+        
+        return -1;
+    }
+};
 ```
-- **Complexity:** T: O(N*M) | S: O(M)
+- **Complexity:** T: O(N * M) string matching | S: O(M) where M is length of B.
+
+---
 
 ### Q324) Shortest Palindrome
-- **Algo:** KMP table on `s + "#" + rev(s)`. Last table value tells us the longest prefix palindrome size. Prepend the remaining reversed suffix.
+- **Problem:** Add characters to the *front* of a string to make it the shortest palindrome possible.
+- **Concept / Optimal Algo:** Find the longest palindromic prefix of `s`. Build `str = s + "#" + rev_s`. Create a KMP `lps` (Longest Prefix Suffix) array. The last value of LPS is the length of the longest palindromic prefix. Add the missing reversed suffix to the front.
 - **C++ Code:**
 ```cpp
-class Solution { public: string shortestPalindrome(string s) {
-    string rev = s; reverse(rev.begin(), rev.end()); string str = s + "#" + rev;
-    vector<int> pi(str.size(), 0);
-    for(int i=1; i<str.size(); i++) {
-        int j = pi[i-1]; while(j > 0 && str[i] != str[j]) j = pi[j-1];
-        if(str[i] == str[j]) j++; pi[i] = j;
-    } return rev.substr(0, s.size() - pi.back()) + s;
-}};
+class Solution {
+public:
+    string shortestPalindrome(string s) {
+        string rev = s;
+        reverse(rev.begin(), rev.end());
+        
+        // Combine with separator to prevent suffix bleeding into prefix
+        string str = s + "#" + rev;
+        vector<int> pi(str.size(), 0);
+        
+        // KMP LPS Array Generation
+        for (int i = 1; i < str.size(); i++) {
+            int j = pi[i - 1];
+            while (j > 0 && str[i] != str[j]) {
+                j = pi[j - 1];
+            }
+            if (str[i] == str[j]) {
+                j++;
+            }
+            pi[i] = j;
+        }
+        
+        // pi.back() gives length of longest palindromic prefix
+        // We prepend the remainder of the reversed string
+        return rev.substr(0, s.size() - pi.back()) + s;
+    }
+};
 ```
 - **Complexity:** T: O(N) | S: O(N)
+
+---
 
 ### Segment Tree
 
 ### Q325) Range Sum Query - Mutable
-- **Algo:** Fenwick Tree (Binary Indexed Tree) for dynamic prefix sums.
+- **Problem:** Array update and range sum queries.
+- **Concept / Optimal Algo:** Fenwick Tree (Binary Indexed Tree). Enables `O(log N)` point updates and `O(log N)` prefix sum queries.
 - **C++ Code:**
 ```cpp
 class NumArray {
-    vector<int> bit, nums; int n;
-    void add(int i, int val) { for(; i<=n; i += i&-i) bit[i] += val; }
-    int query(int i) { int sum=0; for(; i>0; i -= i&-i) sum += bit[i]; return sum; }
+    vector<int> bit;
+    vector<int> nums;
+    int n;
+    
+    // Internal Fenwick logic
+    void add(int i, int val) {
+        for (; i <= n; i += i & -i) {
+            bit[i] += val;
+        }
+    }
+    
+    int query(int i) {
+        int sum = 0;
+        for (; i > 0; i -= i & -i) {
+            sum += bit[i];
+        }
+        return sum;
+    }
+    
 public:
-    NumArray(vector<int>& arr) { n = arr.size(); bit.assign(n+1, 0); nums = arr; for(int i=0; i<n; i++) add(i+1, nums[i]); }
-    void update(int index, int val) { add(index+1, val - nums[index]); nums[index] = val; }
-    int sumRange(int left, int right) { return query(right+1) - query(left); }
+    NumArray(vector<int>& arr) {
+        n = arr.size();
+        bit.assign(n + 1, 0);
+        nums = arr;
+        
+        // Build BIT
+        for (int i = 0; i < n; i++) {
+            add(i + 1, nums[i]);
+        }
+    }
+    
+    void update(int index, int val) {
+        add(index + 1, val - nums[index]);
+        nums[index] = val; // Store state
+    }
+    
+    int sumRange(int left, int right) {
+        return query(right + 1) - query(left);
+    }
 };
 ```
 - **Complexity:** T: O(log N) Update/Query | S: O(N)
 
+---
+
 ### Q326) Count of Smaller Numbers After Self
-- **Algo:** Coordinate Compression + Fenwick Tree OR Merge Sort Index tracking.
-- **C++ Code:** *(Using Merge Sort indexing approach)*
+- **Problem:** For each element, count elements smaller than it to its right.
+- **Concept / Optimal Algo:** Merge Sort. Track original index inside `pair<val, original_index>`. During the `merge` phase, if a left element is placed into the temp array, all elements previously processed from the right half are strictly smaller. Add that right-half count to the left element's original index.
+- **C++ Code:**
 ```cpp
 class Solution {
     vector<int> count;
-    void merge(vector<pair<int,int>>& v, int l, int m, int r) {
-        vector<pair<int,int>> tmp(r-l+1); int i=l, j=m+1, k=0, rightC=0;
-        while(i<=m && j<=r) {
-            if(v[j].first < v[i].first) { rightC++; tmp[k++] = v[j++]; }
-            else { count[v[i].second] += rightC; tmp[k++] = v[i++]; }
+    
+    void merge(vector<pair<int, int>>& v, int l, int m, int r) {
+        vector<pair<int, int>> tmp(r - l + 1);
+        int i = l, j = m + 1, k = 0, rightC = 0;
+        
+        while (i <= m && j <= r) {
+            if (v[j].first < v[i].first) {
+                // Number from right array is smaller
+                rightC++;
+                tmp[k++] = v[j++];
+            } else {
+                // Number from left array is smaller/equal. Register `rightC` elements skipped.
+                count[v[i].second] += rightC;
+                tmp[k++] = v[i++];
+            }
         }
-        while(i<=m) { count[v[i].second] += rightC; tmp[k++] = v[i++]; }
-        while(j<=r) tmp[k++] = v[j++];
-        for(int p=0; p<k; p++) v[l+p] = tmp[p];
+        
+        while (i <= m) {
+            count[v[i].second] += rightC;
+            tmp[k++] = v[i++];
+        }
+        
+        while (j <= r) {
+            tmp[k++] = v[j++];
+        }
+        
+        for (int p = 0; p < k; p++) {
+            v[l + p] = tmp[p];
+        }
     }
-    void mergeSort(vector<pair<int,int>>& v, int l, int r) {
-        if(l >= r) return; int m = l + (r-l)/2;
-        mergeSort(v, l, m); mergeSort(v, m+1, r); merge(v, l, m, r);
+    
+    void mergeSort(vector<pair<int, int>>& v, int l, int r) {
+        if (l >= r) return;
+        int m = l + (r - l) / 2;
+        mergeSort(v, l, m);
+        mergeSort(v, m + 1, r);
+        merge(v, l, m, r);
     }
-public: vector<int> countSmaller(vector<int>& nums) {
-    int n = nums.size(); count.assign(n, 0); vector<pair<int,int>> v(n);
-    for(int i=0; i<n; i++) v[i] = {nums[i], i}; mergeSort(v, 0, n-1); return count;
-}};
+public:
+    vector<int> countSmaller(vector<int>& nums) {
+        int n = nums.size();
+        count.assign(n, 0);
+        vector<pair<int, int>> v(n);
+        
+        for (int i = 0; i < n; i++) {
+            v[i] = {nums[i], i};
+        }
+        
+        mergeSort(v, 0, n - 1);
+        return count;
+    }
+};
 ```
 - **Complexity:** T: O(N log N) | S: O(N)
+
+---
 
 ### Line Sweep
 
 ### Q327) Minimum Interval to Include Each Query
-- **Algo:** Offline Queries. Sort queries with original index. Sort intervals. Sweep Min-Heap `<interval_size, end_time>`. Add intervals starting before query. Drop intervals ending before query. Top is min.
+- **Problem:** Find the smallest interval size that contains the query point `q`.
+- **Concept / Optimal Algo:** Offline Queries. 
+  1. Sort queries preserving indices. 
+  2. Sort intervals by start time. 
+  3. Sweep line: Push intervals starting `<= q` into a Min-Heap based on size.
+  4. Pop intervals from Heap that end `< q`. 
+  5. Top is the minimum valid interval size.
 - **C++ Code:**
 ```cpp
-class Solution { public: vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
-    vector<pair<int, int>> q; for(int i=0; i<queries.size(); i++) q.push_back({queries[i], i});
-    sort(q.begin(), q.end()); sort(intervals.begin(), intervals.end());
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-    vector<int> res(queries.size(), -1); int i = 0, n = intervals.size();
-    for(auto& p : q) {
-        int t = p.first, idx = p.second;
-        while(i < n && intervals[i][0] <= t) { pq.push({intervals[i][1]-intervals[i][0]+1, intervals[i][1]}); i++; }
-        while(!pq.empty() && pq.top().second < t) pq.pop();
-        if(!pq.empty()) res[idx] = pq.top().first;
-    } return res;
-}};
+class Solution {
+public:
+    vector<int> minInterval(vector<vector<int>>& intervals, vector<int>& queries) {
+        int numQ = queries.size();
+        vector<pair<int, int>> q; // {query_time, original_index}
+        for (int i = 0; i < numQ; i++) {
+            q.push_back({queries[i], i});
+        }
+        
+        sort(q.begin(), q.end());
+        sort(intervals.begin(), intervals.end());
+        
+        // Priority Queue: {interval_size, end_time}
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+        vector<int> res(numQ, -1);
+        
+        int i = 0;
+        int n = intervals.size();
+        
+        for (auto& p : q) {
+            int t = p.first;
+            int idx = p.second;
+            
+            // Add all intervals starting on or before current query time
+            while (i < n && intervals[i][0] <= t) {
+                pq.push({intervals[i][1] - intervals[i][0] + 1, intervals[i][1]});
+                i++;
+            }
+            
+            // Remove intervals from PQ that end before current query time
+            while (!pq.empty() && pq.top().second < t) {
+                pq.pop();
+            }
+            
+            if (!pq.empty()) {
+                res[idx] = pq.top().first;
+            }
+        }
+        return res;
+    }
+};
 ```
-- **Complexity:** T: O(N log N + Q log Q) | S: O(N)
+- **Complexity:** T: O(N log N + Q log Q) | S: O(N + Q)
+
+---
 
 ### Q328) The Skyline Problem
-- **Algo:** Sweep Line on edges. +height for start edge, -height for end edge. Multiset stores active heights. Max height changes = key points.
+- **Problem:** Return the key points of the skyline formed by rectangular buildings.
+- **Concept / Optimal Algo:** Line sweep over edges. Start edge is `-height`, End edge is `+height`. Sort them (ensures start edges process before end edges at the same coordinate). Push heights to a Multiset (acts as max heap with random deletion). Whenever the max height in the multiset changes, record a key point.
 - **C++ Code:**
 ```cpp
-class Solution { public: vector<vector<int>> getSkyline(vector<vector<int>>& b) {
-    vector<pair<int, int>> edges;
-    for(auto& w : b) { edges.push_back({w[0], -w[2]}); edges.push_back({w[1], w[2]}); }
-    sort(edges.begin(), edges.end());
-    multiset<int> pq = {0}; vector<vector<int>> res; int prevM = 0;
-    for(auto& e : edges) {
-        if(e.second < 0) pq.insert(-e.second); else pq.erase(pq.find(e.second));
-        int currM = *pq.rbegin(); if(currM != prevM) { res.push_back({e.first, currM}); prevM = currM; }
-    } return res;
-}};
+class Solution {
+public:
+    vector<vector<int>> getSkyline(vector<vector<int>>& buildings) {
+        vector<pair<int, int>> edges;
+        
+        for (auto& b : buildings) {
+            edges.push_back({b[0], -b[2]}); // Left edge (negative to sort top/left first)
+            edges.push_back({b[1], b[2]});  // Right edge (positive)
+        }
+        
+        sort(edges.begin(), edges.end());
+        
+        multiset<int> pq = {0}; // Add ground level 0
+        vector<vector<int>> res;
+        int prevMax = 0;
+        
+        for (auto& e : edges) {
+            if (e.second < 0) {
+                // Add building height (convert back to positive)
+                pq.insert(-e.second);
+            } else {
+                // Remove building height when exiting
+                pq.erase(pq.find(e.second));
+            }
+            
+            int currMax = *pq.rbegin();
+            // If the highest active building changes, it's a skyline key point
+            if (currMax != prevMax) {
+                res.push_back({e.first, currMax});
+                prevMax = currMax;
+            }
+        }
+        
+        return res;
+    }
+};
 ```
 - **Complexity:** T: O(N log N) | S: O(N)
+
+---
 
 ### Suffix Array / Rolling Hash
 
 ### Q329) Longest Duplicate Substring
 - **Problem:** Longest substring occurring at least twice.
-- **Concept:** Binary Search Length + Rabin-Karp Hash.
-- **Algo:** Binary search the substring length. Use polynomial rolling hash to check if a duplicate of length L exists. 
+- **Concept / Optimal Algo:** Binary Search + Rabin-Karp Rolling Hash. Search the length `L` of the substring. Calculate hash for window of size `L`. Move window, update hash in `O(1)`. If hash collision, verify string to prevent false positive.
 - **C++ Code:**
 ```cpp
 class Solution {
     int search(string& s, int L) {
-        long long q = 1e9+7, h = 0, p = 1, d = 26; unordered_map<long long, vector<int>> mp;
-        for(int i=0; i<L; i++) { h = (h*d + (s[i]-'a')) % q; if(i<L-1) p = (p*d) % q; }
+        long long q = 1e9 + 7; // Large prime modulo
+        long long h = 0;
+        long long p = 1;
+        long long d = 26; // Base for lowercase letters
+        unordered_map<long long, vector<int>> mp;
+        
+        // Calculate hash value for the first window of length L
+        for (int i = 0; i < L; i++) {
+            h = (h * d + (s[i] - 'a')) % q;
+            if (i < L - 1) {
+                p = (p * d) % q; // Highest power base for window slide
+            }
+        }
         mp[h].push_back(0);
-        for(int i=1; i<=s.size()-L; i++) {
-            h = (d*(h - (s[i-1]-'a')*p % q + q) % q + (s[i+L-1]-'a')) % q;
-            for(int start : mp[h]) if(s.substr(start, L) == s.substr(i, L)) return i;
+        
+        // Slide the window
+        for (int i = 1; i <= (int)s.size() - L; i++) {
+            // Remove outgoing char and add incoming char
+            h = (d * (h - (s[i - 1] - 'a') * p % q + q) % q + (s[i + L - 1] - 'a')) % q;
+            
+            // Hash match found
+            for (int start : mp[h]) {
+                // Double check to prevent hash collision false positives
+                if (s.substr(start, L) == s.substr(i, L)) {
+                    return i;
+                }
+            }
             mp[h].push_back(i);
-        } return -1;
+        }
+        return -1;
     }
-public: string longestDupSubstring(string s) {
-    int l = 1, r = s.size()-1, start = -1, maxL = 0;
-    while(l <= r) {
-        int m = l + (r-l)/2; int idx = search(s, m);
-        if(idx != -1) { maxL = m; start = idx; l = m + 1; } else r = m - 1;
-    } return start == -1 ? "" : s.substr(start, maxL);
-}};
+    
+public:
+    string longestDupSubstring(string s) {
+        int l = 1, r = s.size() - 1;
+        int start = -1;
+        int maxL = 0;
+        
+        // Binary search the length of the substring
+        while (l <= r) {
+            int m = l + (r - l) / 2;
+            int idx = search(s, m);
+            
+            if (idx != -1) {
+                // Found duplicate of length m, try finding longer
+                maxL = m;
+                start = idx;
+                l = m + 1;
+            } else {
+                // Did not find, search shorter lengths
+                r = m - 1;
+            }
+        }
+        
+        return start == -1 ? "" : s.substr(start, maxL);
+    }
+};
 ```
-- **Complexity:** T: O(N log N) avg | S: O(N)
-
----
+- **Complexity:** T: O(N log N) Average | S: O(N)

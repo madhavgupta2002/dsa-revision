@@ -7,11 +7,20 @@ import './App.css';
 function App() {
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [selectedSheet, setSelectedSheet] = useState(null);
 
-  useEffect(() => {
-    // Fetch and parse the questions.md file
-    fetch('/questions.md')
+  const sheets = [
+    { name: 'Monster', file: 'monster.md' },
+    { name: 'Fraz', file: 'fraz.md' },
+  ];
+
+  const loadSheet = (sheet) => {
+    setSelectedSheet(sheet);
+    setLoading(true);
+    setCurrentIndex(0);
+
+    fetch(`/${sheet.file}`)
       .then(response => response.text())
       .then(text => {
         // Split by question headers (### Q1), ### Q2), etc.)
@@ -23,10 +32,16 @@ function App() {
         setLoading(false);
       })
       .catch(error => {
-        console.error('Error loading questions:', error);
+        console.error('Error loading sheet:', error);
         setLoading(false);
       });
-  }, []);
+  };
+
+  const goBackToSelection = () => {
+    setSelectedSheet(null);
+    setQuestions([]);
+    setCurrentIndex(0);
+  };
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
@@ -56,7 +71,35 @@ function App() {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
-        <p>Loading DSA Questions...</p>
+        <p>Loading sheet...</p>
+      </div>
+    );
+  }
+
+  if (!selectedSheet) {
+    return (
+      <div className="app-container">
+        <header className="app-header">
+          <h1>🚀 DSA Revision Hub</h1>
+        </header>
+        <main className="content-container selection-container">
+          <div className="selection-card">
+            <h2>Select a Sheet</h2>
+            <p>Choose which sheet you want to practice:</p>
+            <div className="sheet-buttons">
+              {sheets.map((sheet) => (
+                <button
+                  key={sheet.file}
+                  className="sheet-button"
+                  onClick={() => loadSheet(sheet)}
+                >
+                  <span className="sheet-icon">📄</span>
+                  <span className="sheet-name">{sheet.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -65,7 +108,7 @@ function App() {
     return (
       <div className="error-container">
         <h2>No questions found</h2>
-        <p>Please make sure questions.md exists in the public folder.</p>
+        <p>Please make sure the sheet exists.</p>
       </div>
     );
   }
@@ -73,7 +116,10 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>🚀 DSA Revision Hub</h1>
+        <h1 className="clickable-title" onClick={goBackToSelection}>🚀 DSA Revision Hub</h1>
+        <div className="sheet-indicator">
+          Currently studying: <strong>{selectedSheet.name}</strong>
+        </div>
         <div className="progress-bar">
           <div
             className="progress-fill"
@@ -149,6 +195,28 @@ function App() {
 
       <div className="keyboard-hint">
         Use ← → arrow keys to navigate
+      </div>
+
+      <div className="mobile-nav-left">
+        <button
+          className="mobile-nav-button"
+          onClick={handlePrevious}
+          disabled={currentIndex === 0}
+          title="Previous"
+        >
+          ←
+        </button>
+      </div>
+
+      <div className="mobile-nav-right">
+        <button
+          className="mobile-nav-button"
+          onClick={handleNext}
+          disabled={currentIndex === questions.length - 1}
+          title="Next"
+        >
+          →
+        </button>
       </div>
     </div>
   );
