@@ -67,6 +67,42 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentIndex, questions.length]);
 
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    };
+
+    const handleTouchEnd = (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    };
+
+    const handleSwipe = () => {
+      const swipeThreshold = 50; // Minimum distance to trigger swipe
+      const difference = touchStartX - touchEndX;
+
+      // Swipe left (next question)
+      if (difference > swipeThreshold) {
+        handleNext();
+      }
+      // Swipe right (previous question)
+      else if (difference < -swipeThreshold) {
+        handlePrevious();
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [currentIndex, questions.length]);
+
   if (loading) {
     return (
       <div className="loading-container">
