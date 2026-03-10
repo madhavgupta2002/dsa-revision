@@ -14,6 +14,7 @@ function App() {
   const sheets = [
     { name: 'Monster', file: 'monster.md' },
     { name: 'Fraz', file: 'fraz.md' },
+    { name: 'Striver 79', file: 'striver79.md' },
   ];
 
   const loadSheet = (sheet) => {
